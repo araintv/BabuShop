@@ -7,7 +7,7 @@ class CustomSnackBar {
         action: snackBarAction,
         backgroundColor: backgroundColor,
         content: content,
-        duration: Duration(milliseconds: 3000),
+        duration: const Duration(milliseconds: 10000),
         behavior: SnackBarBehavior.floating);
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();

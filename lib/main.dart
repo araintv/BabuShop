@@ -51,6 +51,30 @@ class _HomePageState extends State<HomePage> {
 
   List<Map<String, String>> savedData = [];
 
+  List<String> jamaSuggestions = [];
+  List<String> naamSuggestions = [];
+
+  Future<void> _fetchAutocompleteData() async {
+    List<List<String>> sheetData =
+        await UserSheetsApi.fetchAllRows(); // Fetch all rows
+
+    // Extract unique values for Jama and Naam
+    Set<String> jamaSet = {};
+    Set<String> naamSet = {};
+
+    for (var row in sheetData) {
+      if (row.isNotEmpty) {
+        if (row.length > 1) jamaSet.add(row[1]); // Jama column
+        if (row.length > 3) naamSet.add(row[3]); // Naam column
+      }
+    }
+
+    setState(() {
+      jamaSuggestions = jamaSet.toList();
+      naamSuggestions = naamSet.toList();
+    });
+  }
+
   bool uploadingProgress = false;
 
   final List<String> items = [
@@ -64,6 +88,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadData();
+    _fetchAutocompleteData();
   }
 
   // Load saved data from local storage
@@ -88,6 +113,13 @@ class _HomePageState extends State<HomePage> {
 
   // Add new entry
   void saveData() async {
+    print("Date: ${dateController.text}");
+    print("Jama: ${jamaController.text}");
+    print("Naam: ${naamController.text}");
+    print("Quantity: ${qntyController.text}");
+    print("Type: ${selectedValue}");
+    print("Amount: ${amountController.text}");
+
     if (dateController.text.isEmpty ||
         jamaController.text.isEmpty ||
         naamController.text.isEmpty ||
@@ -97,6 +129,13 @@ class _HomePageState extends State<HomePage> {
       // Show a custom SnackBar if any of the fields are empty
       CustomSnackBar(
           context, const Text('All fields must be filled before saving!'));
+    } else if (!isValidDateFormat(dateController.text)) {
+      CustomSnackBar(context, const Text('Date is not correctly formatted'));
+    } else if (jamaController.text == naamController.text) {
+      CustomSnackBar(
+          context,
+          const Text(
+              'The Naam \'Credit\' and Jaama \'Debit\' Should be Different')); //
     } else {
       setState(() {
         savedData.add({
@@ -116,8 +155,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Edit an entry
-  // Edit an entry
   void editEntry(int index) {
     jamaController.text = savedData[index]['Jama'] ?? '';
     naamController.text = savedData[index]['Naam'] ?? '';
@@ -207,7 +244,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Delete an entry
   void deleteEntry(int index) {
     QuickAlert.show(
       context: context,
@@ -227,8 +263,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  bool isValidDateFormat(String date) {
+    RegExp regex = RegExp(r'^\d{2}-\d{2}-\d{4}$');
+    return regex.hasMatch(date);
+  }
+
   @override
   Widget build(BuildContext context) {
+    List<String> combinedSuggestions =
+        naamSuggestions + jamaSuggestions; // Merge lists
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Baboo & Company',
@@ -253,15 +297,38 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: TextField(
-                    controller: jamaController,
-                    decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Jama \'Credit\''),
-                    style: const TextStyle(fontSize: 25),
+                  child: Autocomplete<String>(
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      if (textEditingValue.text.isEmpty) {
+                        return const Iterable<String>.empty();
+                      }
+                      return combinedSuggestions.where((option) => option
+                          .toLowerCase()
+                          .contains(textEditingValue.text.toLowerCase()));
+                    },
+                    onSelected: (String selection) {
+                      jamaController.text = selection;
+                    },
+                    fieldViewBuilder: (context, textFieldController, focusNode,
+                        onEditingComplete) {
+                      textFieldController.text = jamaController.text;
+                      textFieldController.addListener(() {
+                        jamaController.text = textFieldController.text;
+                      });
+
+                      return TextField(
+                        controller: textFieldController,
+                        focusNode: focusNode,
+                        onEditingComplete: onEditingComplete,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Jama \'Credit\'',
+                        ),
+                        style: const TextStyle(fontSize: 25),
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(width: 10),
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.all(9.5),
@@ -309,12 +376,36 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: TextField(
-                    controller: naamController,
-                    decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Naam \'Debit\''),
-                    style: const TextStyle(fontSize: 25),
+                  child: Autocomplete<String>(
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      if (textEditingValue.text.isEmpty) {
+                        return const Iterable<String>.empty();
+                      }
+                      return combinedSuggestions.where((option) => option
+                          .toLowerCase()
+                          .contains(textEditingValue.text.toLowerCase()));
+                    },
+                    onSelected: (String selection) {
+                      naamController.text = selection;
+                    },
+                    fieldViewBuilder: (context, textFieldController, focusNode,
+                        onEditingComplete) {
+                      textFieldController.text = naamController.text;
+                      textFieldController.addListener(() {
+                        naamController.text = textFieldController.text;
+                      });
+
+                      return TextField(
+                        controller: textFieldController,
+                        focusNode: focusNode,
+                        onEditingComplete: onEditingComplete,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Naam \'Debit\'',
+                        ),
+                        style: const TextStyle(fontSize: 25),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 10),

@@ -21,7 +21,7 @@ class _HomePageState extends State<Todaycb> {
   TextEditingController dateController = TextEditingController();
   TextEditingController jamaController = TextEditingController();
   TextEditingController naamController = TextEditingController();
-  TextEditingController qntyController = TextEditingController();
+  // TextEditingController qntyController = TextEditingController();
   TextEditingController typeController = TextEditingController();
   TextEditingController amountController = TextEditingController();
   TextEditingController tafseelController = TextEditingController();
@@ -95,6 +95,15 @@ class _HomePageState extends State<Todaycb> {
     _loadData();
     _fetchAutocompleteData();
     _fetchTypeAutocompleteData();
+
+    focusNodes = [
+      dateFocus,
+      jamaFocus,
+      typeFocus,
+      naamFocus,
+      amountFocus,
+      tafseelFocus,
+    ];
   }
 
   // Load saved data from local storage
@@ -122,7 +131,7 @@ class _HomePageState extends State<Todaycb> {
     if (dateController.text.isEmpty ||
         jamaController.text.isEmpty ||
         naamController.text.isEmpty ||
-        qntyController.text.isEmpty ||
+        // qntyController.text.isEmpty ||
         typeController.text.isEmpty ||
         amountController.text.isEmpty) {
       // Show a custom SnackBar if any of the fields are empty
@@ -142,7 +151,7 @@ class _HomePageState extends State<Todaycb> {
           'Jama': jamaController.text,
           'Type': typeController.text,
           'Naam': naamController.text,
-          'Quantity': qntyController.text,
+          // 'Quantity': qntyController.text,
           'Amount': amountController.text,
           'Details': tafseelController.text.isNotEmpty
               ? tafseelController.text
@@ -151,7 +160,7 @@ class _HomePageState extends State<Todaycb> {
         _saveData(); // Save after adding new entry
         jamaController.clear();
         naamController.clear();
-        qntyController.clear();
+        // qntyController.clear();
         amountController.clear();
         tafseelController.clear();
       });
@@ -161,7 +170,7 @@ class _HomePageState extends State<Todaycb> {
   void editEntry(int index) {
     jamaController.text = savedData[index]['Jama'] ?? '';
     naamController.text = savedData[index]['Naam'] ?? '';
-    qntyController.text = savedData[index]['Quantity'] ?? '';
+    // qntyController.text = savedData[index]['Quantity'] ?? '';
     amountController.text = savedData[index]['Amount'] ?? '';
     tafseelController.text = savedData[index]['Details'] ?? '';
 
@@ -210,7 +219,7 @@ class _HomePageState extends State<Todaycb> {
                 decoration: const InputDecoration(labelText: 'Naam'),
               ),
               TextField(
-                controller: qntyController,
+                // controller: qntyController,
                 decoration: const InputDecoration(labelText: 'Quantity'),
               ),
               const SizedBox(height: 10),
@@ -238,7 +247,7 @@ class _HomePageState extends State<Todaycb> {
                     'Jama': jamaController.text,
                     'Type': selectedValue ?? '',
                     'Naam': naamController.text,
-                    'Quantity': qntyController.text,
+                    // 'Quantity': qntyController.text,
                     'Amount': amountController.text,
                     'Details': tafseelController.text,
                   };
@@ -247,7 +256,7 @@ class _HomePageState extends State<Todaycb> {
 
                 jamaController.clear();
                 naamController.clear();
-                qntyController.clear();
+                // qntyController.clear();
                 amountController.clear();
                 tafseelController.clear();
                 Navigator.pop(context);
@@ -284,6 +293,52 @@ class _HomePageState extends State<Todaycb> {
     return regex.hasMatch(date);
   }
 
+  // Focus Nodes
+  final FocusNode dateFocus = FocusNode();
+  final FocusNode amountFocus = FocusNode();
+  final FocusNode tafseelFocus = FocusNode();
+
+  // List of FocusNodes for easy navigation
+  late List<FocusNode> focusNodes;
+  int currentIndex = 0;
+
+  @override
+  void dispose() {
+    dateController.dispose();
+    jamaController.dispose();
+    typeController.dispose();
+    naamController.dispose();
+    amountController.dispose();
+    tafseelController.dispose();
+
+    for (var node in focusNodes) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  void _handleKeyEvent(RawKeyEvent event) {
+    if (event is RawKeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.arrowRight ||
+          event.logicalKey == LogicalKeyboardKey.enter) {
+        _moveFocus(1); // Move to next field
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+        _moveFocus(-1); // Move to previous field
+      }
+    }
+  }
+
+  void _moveFocus(int step) {
+    setState(() {
+      currentIndex = (currentIndex + step) % focusNodes.length;
+      focusNodes[currentIndex].requestFocus();
+    });
+  }
+
+  FocusNode jamaFocus = FocusNode();
+  FocusNode typeFocus = FocusNode();
+  FocusNode naamFocus = FocusNode();
+
   @override
   Widget build(BuildContext context) {
     List<String> combinedSuggestions =
@@ -297,165 +352,188 @@ class _HomePageState extends State<Todaycb> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: dateController,
-                    decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Date \'DD-MM-YYYY\''),
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: Autocomplete<String>(
-                    optionsBuilder: (TextEditingValue textEditingValue) {
-                      if (textEditingValue.text.isEmpty) {
-                        return const Iterable<String>.empty();
-                      }
-                      return combinedSuggestions.where((option) => option
-                          .toLowerCase()
-                          .contains(textEditingValue.text.toLowerCase()));
-                    },
-                    onSelected: (String selection) {
-                      jamaController.text = selection;
-                    },
-                    fieldViewBuilder: (context, textFieldController, focusNode,
-                        onEditingComplete) {
-                      textFieldController.text = jamaController.text;
-                      textFieldController.addListener(() {
-                        jamaController.text = textFieldController.text;
-                      });
-
-                      return TextField(
-                        controller: textFieldController,
-                        focusNode: focusNode,
-                        onEditingComplete: onEditingComplete,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Jama \'Credit\'',
+          RawKeyboardListener(
+            focusNode: FocusNode(), // To capture keyboard events
+            onKey: _handleKeyEvent,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: TextField(
+                            controller: dateController,
+                            decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Date \'DD-MM-YYYY\''),
+                            style: const TextStyle(fontSize: 20),
+                          ),
                         ),
-                        style: const TextStyle(fontSize: 20),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: Autocomplete<String>(
-                    optionsBuilder: (TextEditingValue textEditingValue) {
-                      return typeSuggestions.where((option) => option
-                          .toLowerCase()
-                          .contains(textEditingValue.text.toLowerCase()));
-                    },
-                    onSelected: (String selection) {
-                      typeController.text = selection;
-                    },
-                    fieldViewBuilder: (context, textFieldController, focusNode,
-                        onEditingComplete) {
-                      textFieldController.text = typeController.text;
+                        const SizedBox(width: 5),
+                        Expanded(
+                          flex: 3,
+                          child: Autocomplete<String>(
+                            optionsBuilder:
+                                (TextEditingValue textEditingValue) {
+                              if (textEditingValue.text.isEmpty) {
+                                return const Iterable<String>.empty();
+                              }
+                              return combinedSuggestions.where((option) =>
+                                  option.toLowerCase().contains(
+                                      textEditingValue.text.toLowerCase()));
+                            },
+                            onSelected: (String selection) {
+                              jamaController.text = selection;
+                            },
+                            fieldViewBuilder: (context, textFieldController,
+                                focusNode, onEditingComplete) {
+                              textFieldController.text = jamaController.text;
+                              textFieldController.addListener(() {
+                                jamaController.text = textFieldController.text;
+                              });
 
-                      textFieldController.addListener(() {
-                        if (textFieldController.text != typeController.text) {
-                          typeController.text = textFieldController.text;
-                        }
-                      });
-
-                      return TextField(
-                        controller:
-                            textFieldController, // Use textFieldController here
-                        focusNode: focusNode,
-                        onEditingComplete: onEditingComplete,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Online/Gud Bill/Cheeni Brokery',
+                              return TextField(
+                                controller: textFieldController,
+                                focusNode: focusNode,
+                                onEditingComplete: onEditingComplete,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Jama \'Credit\'',
+                                ),
+                                style: const TextStyle(fontSize: 20),
+                              );
+                            },
+                          ),
                         ),
-                        style: const TextStyle(fontSize: 20),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: Autocomplete<String>(
-                    optionsBuilder: (TextEditingValue textEditingValue) {
-                      if (textEditingValue.text.isEmpty) {
-                        return const Iterable<String>.empty();
-                      }
-                      return combinedSuggestions.where((option) => option
-                          .toLowerCase()
-                          .contains(textEditingValue.text.toLowerCase()));
-                    },
-                    onSelected: (String selection) {
-                      naamController.text = selection;
-                    },
-                    fieldViewBuilder: (context, textFieldController, focusNode,
-                        onEditingComplete) {
-                      textFieldController.text = naamController.text;
-                      textFieldController.addListener(() {
-                        naamController.text = textFieldController.text;
-                      });
+                        const SizedBox(width: 5),
+                        Expanded(
+                          flex: 2,
+                          child: Autocomplete<String>(
+                            optionsBuilder:
+                                (TextEditingValue textEditingValue) {
+                              return typeSuggestions.where((option) => option
+                                  .toLowerCase()
+                                  .contains(
+                                      textEditingValue.text.toLowerCase()));
+                            },
+                            onSelected: (String selection) {
+                              typeController.text = selection;
+                            },
+                            fieldViewBuilder: (context, textFieldController,
+                                focusNode, onEditingComplete) {
+                              textFieldController.text = typeController.text;
 
-                      return TextField(
-                        controller: textFieldController,
-                        focusNode: focusNode,
-                        onEditingComplete: onEditingComplete,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Naam \'Debit\'',
+                              textFieldController.addListener(() {
+                                if (textFieldController.text !=
+                                    typeController.text) {
+                                  typeController.text =
+                                      textFieldController.text;
+                                }
+                              });
+
+                              return TextField(
+                                controller:
+                                    textFieldController, // Use textFieldController here
+                                focusNode: focusNode,
+                                onEditingComplete: onEditingComplete,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Online/Gud Bill/Cheeni Brokery',
+                                ),
+                                style: const TextStyle(fontSize: 20),
+                              );
+                            },
+                          ),
                         ),
-                        style: const TextStyle(fontSize: 20),
-                      );
-                    },
+                        const SizedBox(width: 5),
+                        Expanded(
+                          flex: 3,
+                          child: Autocomplete<String>(
+                            optionsBuilder:
+                                (TextEditingValue textEditingValue) {
+                              if (textEditingValue.text.isEmpty) {
+                                return const Iterable<String>.empty();
+                              }
+                              return combinedSuggestions.where((option) =>
+                                  option.toLowerCase().contains(
+                                      textEditingValue.text.toLowerCase()));
+                            },
+                            onSelected: (String selection) {
+                              naamController.text = selection;
+                            },
+                            fieldViewBuilder: (context, textFieldController,
+                                focusNode, onEditingComplete) {
+                              textFieldController.text = naamController.text;
+                              textFieldController.addListener(() {
+                                naamController.text = textFieldController.text;
+                              });
+
+                              return TextField(
+                                controller: textFieldController,
+                                focusNode: focusNode,
+                                onEditingComplete: onEditingComplete,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Naam \'Debit\'',
+                                ),
+                                style: const TextStyle(fontSize: 20),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        // Expanded(
+                        //   child: TextField(
+                        //     // controller: qntyController,
+                        //     decoration: const InputDecoration(
+                        //         border: OutlineInputBorder(), hintText: 'Quantity'),
+                        //     style: const TextStyle(fontSize: 20),
+                        //   ),
+                        // ),
+                        const SizedBox(
+                            width: 25,
+                            child: Center(
+                                child: Text('= ',
+                                    style: TextStyle(
+                                        fontSize: 30,
+                                        fontWeight: FontWeight.bold)))),
+                        Expanded(
+                          flex: 2,
+                          child: TextField(
+                            controller: amountController,
+                            decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Rakam \'Amount\''),
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: TextField(
-                    controller: qntyController,
-                    decoration: const InputDecoration(
-                        border: OutlineInputBorder(), hintText: 'Quantity'),
-                    style: const TextStyle(fontSize: 20),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        left: 20, right: 20, top: 10, bottom: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: tafseelController,
+                            decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Tafseel \'Details\''),
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(
-                    width: 25,
-                    child: Center(
-                        child: Text('=',
-                            style: TextStyle(
-                                fontSize: 30, fontWeight: FontWeight.bold)))),
-                Expanded(
-                  child: TextField(
-                    controller: amountController,
-                    decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Rakam \'Amount\''),
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding:
-                const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: tafseelController,
-                    decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Tafseel \'Details\''),
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           Padding(
@@ -494,7 +572,7 @@ class _HomePageState extends State<Todaycb> {
                     setState(() {
                       jamaController.clear();
                       naamController.clear();
-                      qntyController.clear();
+                      // qntyController.clear();
                       amountController.clear();
                       tafseelController.clear();
                     });

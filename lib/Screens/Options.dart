@@ -1,6 +1,7 @@
 import 'package:baboo_and_co/Screens/CheeniBrokery.dart';
 import 'package:baboo_and_co/Screens/DuePayment.dart';
 import 'package:baboo_and_co/Screens/GudBill.dart';
+import 'package:baboo_and_co/Screens/online.dart';
 import 'package:flutter/material.dart';
 import 'package:baboo_and_co/Screens/TodayCB.dart';
 import 'package:baboo_and_co/Screens/dailyCB.dart';
@@ -43,70 +44,124 @@ class _OptionsScreenState extends State<OptionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Center(
-              child: SizedBox(
-                width: screenWidth * 0.8, // Adjust width dynamically
+      body: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Center(
+            child: SizedBox(
+                width: 600,
                 height: 400,
-                child: Image.asset('assets/logo.jpeg'),
+                child: Image.asset('assets/logo.jpeg')),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // SizedBox(
+                  //     height: 80,
+                  //     width: 300,
+                  //     child: Button_Widget(context, 'Online', Colors.black, () {
+                  //       Navigator.of(context).push(MaterialPageRoute(
+                  //           builder: (context) => const OnlineScreen()));
+                  //     })),
+                ],
               ),
-            ),
-            SizedBox(
-              height: 80,
-              width: screenWidth * 0.8,
-              child: Button_Widget(
-                context,
-                'Gud Bill',
-                Colors.black,
-                () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const GudBillScreen(),
-                    ),
-                  );
-                },
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                      height: 80,
+                      width: 300,
+                      child: Button_Widget(
+                          context, 'Today Cash Book', Colors.black, () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => const Todaycb()));
+                      })),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                      height: 80,
+                      width: 300,
+                      child: Button_Widget(
+                          context, 'General ledger', Colors.black, () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => const DailyCashBook()));
+                      })),
+                ],
               ),
-            ),
-            SizedBox(height: 10),
-            // Padding(
-            //   padding: const EdgeInsets.symmetric(vertical: 10),
-            //   child: SizedBox(
-            //     height: 80,
-            //     width: screenWidth * 0.8,
-            //     child: Button_Widget(context, 'Due Payment', Colors.black, () {
-            //       Navigator.of(context).push(
-            //         MaterialPageRoute(
-            //           builder: (context) => const DuePaymentScreen(),
-            //         ),
-            //       );
-            //     }),
-            //   ),
-            // ),
-            SizedBox(
-              height: 80,
-              width: screenWidth * 0.8,
-              child: Button_Widget(
-                context,
-                'Khata \'Accounts\'',
-                Colors.black,
-                () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const KhataScreen(),
-                    ),
-                  );
-                },
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                      height: 80,
+                      width: 300,
+                      child: Button_Widget(
+                        context,
+                        'Gud Bill',
+                        Colors.black,
+                        () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const GudBillScreen(),
+                            ),
+                          );
+                        },
+                      )),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                      height: 80,
+                      width: 300,
+                      child: Button_Widget(
+                          context, 'Cheeni Brokery', Colors.black, () {
+                        // Navigator.of(context).push(
+                        //   MaterialPageRoute(
+                        //     builder: (context) => const CheeniBrokeryScreen(),
+                        //   ),
+                        // );
+                      })),
+                ],
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                      height: 80,
+                      width: 300,
+                      child: Button_Widget(
+                        context,
+                        'Khata \'Accounts\'',
+                        Colors.black,
+                        () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const KhataScreen(),
+                            ),
+                          );
+                        },
+                      )),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                      height: 80,
+                      width: 300,
+                      child: Button_Widget(context, 'Due Payment', Colors.black,
+                          () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const DuePaymentScreen(),
+                          ),
+                        );
+                      })),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

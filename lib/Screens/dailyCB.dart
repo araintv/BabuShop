@@ -15,7 +15,6 @@ class _CustomerKhataState extends State<DailyCashBook> {
   List<List<String>> allData = [];
   bool isLoading = true;
   TextEditingController searchController = TextEditingController();
-  bool editAccess = false;
 
   @override
   void initState() {
@@ -67,6 +66,7 @@ class _CustomerKhataState extends State<DailyCashBook> {
                   child: Row(
                     children: [
                       Expanded(
+                        flex: 4,
                         child: TextField(
                           controller: searchController,
                           decoration: InputDecoration(
@@ -84,14 +84,15 @@ class _CustomerKhataState extends State<DailyCashBook> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Button_Widget(
-                          context, 'Refresh', Colors.green, fetchData),
+                      Expanded(
+                        flex: 1,
+                        child: SizedBox(
+                          height: 50,
+                          child: Button_Widget(
+                              context, 'Refresh', Colors.green, fetchData),
+                        ),
+                      ),
                       const SizedBox(width: 10),
-                      Button_Widget(context, editAccess ? 'Done' : 'Edit',
-                          editAccess ? Colors.red : Colors.blue, () {
-                        setState(() => editAccess = !editAccess);
-                        CustomSnackBar(context, Text('$editAccess'));
-                      }),
                     ],
                   ),
                 ),
@@ -101,36 +102,34 @@ class _CustomerKhataState extends State<DailyCashBook> {
                       : ListView(
                           children: [
                             DataTable(
-                              columns: [
-                                const DataColumn(
+                              columns: const [
+                                DataColumn(
                                     label: Text('No.',
                                         style: TextStyle(fontSize: 18))),
-                                const DataColumn(
+                                DataColumn(
                                     label: Text('Date',
                                         style: TextStyle(fontSize: 18))),
-                                const DataColumn(
+                                DataColumn(
                                     label: Text('Jama',
                                         style: TextStyle(fontSize: 18))),
-                                const DataColumn(
+                                DataColumn(
                                     label: Text('Type',
                                         style: TextStyle(fontSize: 18))),
-                                const DataColumn(
+                                DataColumn(
                                     label: Text('Naam',
                                         style: TextStyle(fontSize: 18))),
-                                const DataColumn(
+                                DataColumn(
                                     label: Text('Quantity',
                                         style: TextStyle(fontSize: 18))),
-                                const DataColumn(
+                                DataColumn(
                                     label: Text('Amount',
                                         style: TextStyle(fontSize: 18))),
-                                if (editAccess)
-                                  const DataColumn(
-                                      label: Text('Edit',
-                                          style: TextStyle(fontSize: 18))),
-                                if (editAccess)
-                                  const DataColumn(
-                                      label: Text('Delete',
-                                          style: TextStyle(fontSize: 18))),
+                                DataColumn(
+                                    label: Text('Edit',
+                                        style: TextStyle(fontSize: 18))),
+                                DataColumn(
+                                    label: Text('Delete',
+                                        style: TextStyle(fontSize: 18))),
                               ],
                               rows: filteredData.map((entry) {
                                 int realIndex = entry["index"];
@@ -144,16 +143,14 @@ class _CustomerKhataState extends State<DailyCashBook> {
                                   DataCell(Text(row[3])),
                                   DataCell(Text(row[4])),
                                   DataCell(Text(row[5])),
-                                  if (editAccess)
-                                    DataCell(InkWell(
-                                        onTap: () => editEntry(realIndex, row),
-                                        child: const Icon(Icons.edit,
-                                            color: Colors.blue))),
-                                  if (editAccess)
-                                    DataCell(InkWell(
-                                        onTap: () => deleteEntry(realIndex),
-                                        child: const Icon(Icons.delete,
-                                            color: Colors.red))),
+                                  DataCell(InkWell(
+                                      onTap: () => editEntry(realIndex, row),
+                                      child: const Icon(Icons.edit,
+                                          color: Colors.blue))),
+                                  DataCell(InkWell(
+                                      onTap: () => deleteEntry(realIndex),
+                                      child: const Icon(Icons.delete,
+                                          color: Colors.red))),
                                 ]);
                               }).toList(),
                             ),

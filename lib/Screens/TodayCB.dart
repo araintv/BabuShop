@@ -648,9 +648,9 @@ class _HomePageState extends State<Todaycb> {
                           DataColumn(
                               label:
                                   Text('Naam', style: TextStyle(fontSize: 25))),
-                          DataColumn(
-                              label: Text('Quantity',
-                                  style: TextStyle(fontSize: 25))),
+                          // DataColumn(
+                          //     label: Text('Quantity',
+                          //         style: TextStyle(fontSize: 25))),
                           DataColumn(
                               label: Text('Amount',
                                   style: TextStyle(fontSize: 25))),
@@ -680,7 +680,7 @@ class _HomePageState extends State<Todaycb> {
                             DataCell(Text(data['Jama'] ?? '')),
                             DataCell(Text(data['Type'] ?? '')),
                             DataCell(Text(data['Naam'] ?? '')),
-                            DataCell(Text(data['Quantity'] ?? '')),
+                            // DataCell(Text(data['Quantity'] ?? '')),
                             DataCell(Text(data['Amount'] ?? '')),
                             DataCell(Text(data['Details'] ?? '')),
                             DataCell(InkWell(

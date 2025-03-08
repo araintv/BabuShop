@@ -2,6 +2,7 @@ import 'package:baboo_and_co/Widgets/Button.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:baboo_and_co/Services/GsheetApi.dart';
+import 'package:intl/intl.dart';
 import 'package:quickalert/models/quickalert_type.dart';
 import 'package:quickalert/widgets/quickalert_dialog.dart';
 
@@ -39,7 +40,6 @@ class _KhataScreenState extends State<KhataScreen> {
     });
   }
 
-  // Fetch data based on search query
   Future<void> fetchData(String khataName) async {
     setState(() => isLoading = true);
     final data = await UserSheetsApi.fetchAllRows();
@@ -61,8 +61,26 @@ class _KhataScreenState extends State<KhataScreen> {
               entry["Naam"]?.toLowerCase() == khataName.toLowerCase() ||
               entry["Jama"]?.toLowerCase() == khataName.toLowerCase())
           .toList();
+
+      // Sort the filtered data by Date in descending order
+      filteredData.sort((a, b) {
+        DateTime dateA = _parseDate(a["Date"] ?? "");
+        DateTime dateB = _parseDate(b["Date"] ?? "");
+        return dateB.compareTo(dateA); // Descending order
+      });
+
       isLoading = false;
     });
+  }
+
+// Helper function to parse the date
+  DateTime _parseDate(String dateString) {
+    try {
+      return DateFormat("dd-MM-yyyy")
+          .parse(dateString); // Adjust format if needed
+    } catch (e) {
+      return DateTime(2000, 1, 1); // Default fallback date
+    }
   }
 
   String formatDate(String date) {
@@ -83,9 +101,31 @@ class _KhataScreenState extends State<KhataScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double runningBalance = 0.0;
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
+
+    // Precompute running balances in correct order (oldest first)
+    double runningBalance = 0.0;
+    List<double> runningBalances = [];
+
+    for (int i = filteredData.length - 1; i >= 0; i--) {
+      final entry = filteredData[i];
+      double amount = double.tryParse(entry["Amount"] ?? "0") ?? 0.0;
+
+      bool isDebit =
+          entry["Naam"]?.toLowerCase() == searchController.text.toLowerCase();
+      bool isCredit =
+          entry["Jama"]?.toLowerCase() == searchController.text.toLowerCase();
+
+      if (isDebit) {
+        runningBalance -= amount;
+      } else if (isCredit) {
+        runningBalance += amount;
+      }
+
+      runningBalances.insert(
+          0, runningBalance); // Insert at index 0 to maintain order
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -93,7 +133,6 @@ class _KhataScreenState extends State<KhataScreen> {
         backgroundColor: Colors.white,
         title:
             const Text("Khata Accounts", style: TextStyle(color: Colors.black)),
-        // centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Column(
@@ -128,7 +167,6 @@ class _KhataScreenState extends State<KhataScreen> {
                             hintText: "Search Khata",
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10)),
-                            // prefixIcon: const Icon(Icons.search),
                           ),
                         );
                       },
@@ -169,19 +207,10 @@ class _KhataScreenState extends State<KhataScreen> {
                           final entry = filteredData[index];
                           double amount =
                               double.tryParse(entry["Amount"] ?? "0") ?? 0.0;
-                          bool type = entry["Type"]?.toLowerCase() ==
-                              searchController.text.toLowerCase();
-
                           bool isDebit = entry["Naam"]?.toLowerCase() ==
                               searchController.text.toLowerCase();
                           bool isCredit = entry["Jama"]?.toLowerCase() ==
                               searchController.text.toLowerCase();
-
-                          if (isDebit) {
-                            runningBalance -= amount;
-                          } else if (isCredit) {
-                            runningBalance += amount;
-                          }
 
                           return Column(
                             children: [
@@ -194,24 +223,18 @@ class _KhataScreenState extends State<KhataScreen> {
                                       flex: 1,
                                       child: Center(
                                         child: Text(
-                                            formatDate(entry["Date"] ?? "---"),
-                                            style: TextStyle(
-                                              fontSize: screenWidth * 0.040,
-                                            )),
+                                          formatDate(entry["Date"] ?? "---"),
+                                          style: TextStyle(
+                                              fontSize: screenWidth * 0.020),
+                                        ),
                                       ),
                                     ),
-                                    Text(" - ",
-                                        style: TextStyle(
-                                          fontSize: screenWidth * 0.040,
-                                        )),
                                     Expanded(
-                                      flex: 1,
+                                      flex: 2,
                                       child: Text(
-                                        entry["Type"] ?? "---",
-                                        maxLines: 2,
+                                        entry["Details"] ?? "---",
                                         style: TextStyle(
-                                          fontSize: screenWidth * 0.025,
-                                        ),
+                                            fontSize: screenWidth * 0.015),
                                       ),
                                     ),
                                     Expanded(
@@ -222,8 +245,7 @@ class _KhataScreenState extends State<KhataScreen> {
                                               ? amount.toStringAsFixed(0)
                                               : "---",
                                           style: TextStyle(
-                                              fontSize: screenWidth * 0.040,
-                                              // fontWeight: FontWeight.w600,
+                                              fontSize: screenWidth * 0.020,
                                               color: Colors.green),
                                         ),
                                       ),
@@ -236,8 +258,7 @@ class _KhataScreenState extends State<KhataScreen> {
                                               ? amount.toStringAsFixed(0)
                                               : "---",
                                           style: TextStyle(
-                                              fontSize: screenWidth * 0.040,
-                                              // fontWeight: FontWeight.w600,
+                                              fontSize: screenWidth * 0.020,
                                               color: Colors.red),
                                         ),
                                       ),
@@ -246,12 +267,12 @@ class _KhataScreenState extends State<KhataScreen> {
                                       flex: 2,
                                       child: Center(
                                         child: Text(
-                                          runningBalance >= 0
-                                              ? "+${runningBalance.toStringAsFixed(0)}"
-                                              : runningBalance
+                                          runningBalances[index] >= 0
+                                              ? "+${runningBalances[index].toStringAsFixed(0)}"
+                                              : runningBalances[index]
                                                   .toStringAsFixed(0),
                                           style: TextStyle(
-                                              fontSize: screenWidth * 0.040,
+                                              fontSize: screenWidth * 0.030,
                                               fontWeight: FontWeight.w600,
                                               color: Colors.blue),
                                         ),

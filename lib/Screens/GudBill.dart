@@ -201,7 +201,7 @@ class _GudBillScreenState extends State<GudBillScreen> {
         partyName, // Naam (Party Name)
         partyQuantity.toString(), // Quantity (Original sum of bags)
         partyAmount.toString(), // Amount (Party Sum)
-        "Total Weight: ${multipliedWeight.toString()}, Gud Bill Number: ${goodBillNumber.text}, Tafseel: $tafseelDetails" // Tafseel added
+        "Total Bags: ${partyQuantity.toString()} Total Weight: ${multipliedWeight.toString()}, Gud Bill Number: ${goodBillNumber.text}, Tafseel: $tafseelDetails" // Tafseel added
       ];
 
       await UserSheetsApi.insertRow(partyEntry); // Upload Party Entry
@@ -504,128 +504,168 @@ class _GudBillScreenState extends State<GudBillScreen> {
                             ListView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: partyList[partyIndex]['items'].length,
+                              itemCount: partyList[partyIndex]['items'].length +
+                                  1, // Extra item for total weight
                               itemBuilder: (context, itemIndex) {
-                                return Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          flex: 1,
-                                          child: TextField(
-                                            controller: partyList[partyIndex]
-                                                ['items'][itemIndex]['bags'],
-                                            keyboardType: TextInputType.number,
-                                            decoration: InputDecoration(
-                                              label: Text(
-                                                'Quantity',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize:
-                                                        screenWidth * 0.040),
+                                if (itemIndex <
+                                    partyList[partyIndex]['items'].length) {
+                                  double quantity = double.tryParse(
+                                          partyList[partyIndex]['items']
+                                                      [itemIndex]['bags']
+                                                  ?.text ??
+                                              '0') ??
+                                      0;
+                                  double kg = double.tryParse(
+                                          partyList[partyIndex]['items']
+                                                      [itemIndex]['kg']
+                                                  ?.text ??
+                                              '0') ??
+                                      0;
+                                  double itemWeight = quantity * kg;
+
+                                  return Column(
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 1,
+                                            child: TextField(
+                                              controller: partyList[partyIndex]
+                                                  ['items'][itemIndex]['bags'],
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: InputDecoration(
+                                                label: Text(
+                                                  'Quantity',
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize:
+                                                          screenWidth * 0.040),
+                                                ),
+                                                border:
+                                                    const OutlineInputBorder(),
+                                                hintText: "Katta",
                                               ),
-                                              border:
-                                                  const OutlineInputBorder(),
-                                              hintText: "Katta",
+                                              onChanged: (_) => calculateTotal(
+                                                  partyIndex, itemIndex),
                                             ),
-                                            onChanged: (_) => calculateTotal(
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            flex: 1,
+                                            child: TextField(
+                                              controller: partyList[partyIndex]
+                                                  ['items'][itemIndex]['kg'],
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: InputDecoration(
+                                                label: Text(
+                                                  'Kilogram',
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize:
+                                                          screenWidth * 0.040),
+                                                ),
+                                                border:
+                                                    const OutlineInputBorder(),
+                                                hintText: "Weight Per Bag",
+                                              ),
+                                              onChanged: (_) => calculateTotal(
+                                                  partyIndex, itemIndex),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            flex: 1,
+                                            child: Text(
+                                              '$itemWeight KG',
+                                              style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: TextField(
+                                              controller: partyList[partyIndex]
+                                                  ['items'][itemIndex]['rate'],
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: InputDecoration(
+                                                label: Text(
+                                                  'Rate',
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize:
+                                                          screenWidth * 0.040),
+                                                ),
+                                                border:
+                                                    const OutlineInputBorder(),
+                                                hintText: "Rate as per 40 KG",
+                                              ),
+                                              onChanged: (_) => calculateTotal(
+                                                  partyIndex, itemIndex),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              'Rs. ${partyList[partyIndex]['items'][itemIndex]['total']!.text}',
+                                              style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 2,
+                                            child: TextField(
+                                              controller: partyList[partyIndex]
+                                                      ['items'][itemIndex]
+                                                  ['description'],
+                                              keyboardType: TextInputType.text,
+                                              decoration: InputDecoration(
+                                                label: Text(
+                                                  'Tafseel',
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize:
+                                                          screenWidth * 0.040),
+                                                ),
+                                                border:
+                                                    const OutlineInputBorder(),
+                                                hintText: "Bori/Lal/Sabza",
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete,
+                                                color: Colors.red),
+                                            onPressed: () => removeItem(
                                                 partyIndex, itemIndex),
                                           ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          flex: 1,
-                                          child: TextField(
-                                            controller: partyList[partyIndex]
-                                                ['items'][itemIndex]['kg'],
-                                            keyboardType: TextInputType.number,
-                                            decoration: InputDecoration(
-                                              label: Text(
-                                                'Kilogram',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize:
-                                                        screenWidth * 0.040),
-                                              ),
-                                              border:
-                                                  const OutlineInputBorder(),
-                                              hintText: "Weight Per Bag",
-                                            ),
-                                            onChanged: (_) => calculateTotal(
-                                                partyIndex, itemIndex),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          flex: 1,
-                                          child: TextField(
-                                            controller: partyList[partyIndex]
-                                                ['items'][itemIndex]['rate'],
-                                            keyboardType: TextInputType.number,
-                                            decoration: InputDecoration(
-                                              label: Text(
-                                                'Rate',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize:
-                                                        screenWidth * 0.040),
-                                              ),
-                                              border:
-                                                  const OutlineInputBorder(),
-                                              hintText: "Rate as per 40 KG",
-                                            ),
-                                            onChanged: (_) => calculateTotal(
-                                                partyIndex, itemIndex),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          flex: 2,
-                                          child: TextField(
-                                            controller: partyList[partyIndex]
-                                                    ['items'][itemIndex]
-                                                ['description'],
-                                            keyboardType: TextInputType.text,
-                                            decoration: InputDecoration(
-                                              label: Text(
-                                                'Tafseel',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize:
-                                                        screenWidth * 0.040),
-                                              ),
-                                              border:
-                                                  const OutlineInputBorder(),
-                                              hintText: "Bori/Lal/Sabza",
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          flex: 2,
-                                          child: Text(
-                                            'Rs. ${partyList[partyIndex]['items'][itemIndex]['total']!.text}',
-                                            style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete,
-                                              color: Colors.red),
-                                          onPressed: () =>
-                                              removeItem(partyIndex, itemIndex),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(width: 10),
-                                    const Divider(),
-                                  ],
-                                );
+                                        ],
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const Divider(),
+                                    ],
+                                  );
+                                }
                               },
                             ),
                             Row(

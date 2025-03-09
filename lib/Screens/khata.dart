@@ -233,6 +233,7 @@ class _KhataScreenState extends State<KhataScreen> {
                                       flex: 2,
                                       child: Text(
                                         entry["Details"] ?? "---",
+                                        maxLines: 2,
                                         style: TextStyle(
                                             fontSize: screenWidth * 0.015),
                                       ),
@@ -245,7 +246,7 @@ class _KhataScreenState extends State<KhataScreen> {
                                               ? amount.toStringAsFixed(0)
                                               : "---",
                                           style: TextStyle(
-                                              fontSize: screenWidth * 0.020,
+                                              fontSize: screenWidth * 0.025,
                                               color: Colors.green),
                                         ),
                                       ),
@@ -258,7 +259,7 @@ class _KhataScreenState extends State<KhataScreen> {
                                               ? amount.toStringAsFixed(0)
                                               : "---",
                                           style: TextStyle(
-                                              fontSize: screenWidth * 0.020,
+                                              fontSize: screenWidth * 0.025,
                                               color: Colors.red),
                                         ),
                                       ),
@@ -272,7 +273,7 @@ class _KhataScreenState extends State<KhataScreen> {
                                               : runningBalances[index]
                                                   .toStringAsFixed(0),
                                           style: TextStyle(
-                                              fontSize: screenWidth * 0.030,
+                                              fontSize: screenWidth * 0.025,
                                               fontWeight: FontWeight.w600,
                                               color: Colors.blue),
                                         ),

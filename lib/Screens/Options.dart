@@ -4,7 +4,7 @@ import 'package:baboo_and_co/Screens/GudBill.dart';
 import 'package:baboo_and_co/Screens/online.dart';
 import 'package:flutter/material.dart';
 import 'package:baboo_and_co/Screens/TodayCB.dart';
-import 'package:baboo_and_co/Screens/dailyCB.dart';
+import 'package:baboo_and_co/Screens/GeneraLedger.dart';
 import 'package:baboo_and_co/Services/GsheetApi.dart';
 import 'package:baboo_and_co/Widgets/Button.dart';
 import 'package:baboo_and_co/Screens/khata.dart';
@@ -112,18 +112,18 @@ class _OptionsScreenState extends State<OptionsScreen> {
                           );
                         },
                       )),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                      height: 80,
-                      width: 300,
-                      child: Button_Widget(
-                          context, 'Cheeni Brokery', Colors.black, () {
-                        // Navigator.of(context).push(
-                        //   MaterialPageRoute(
-                        //     builder: (context) => const CheeniBrokeryScreen(),
-                        //   ),
-                        // );
-                      })),
+                  // const SizedBox(width: 10),
+                  // SizedBox(
+                  //     height: 80,
+                  //     width: 300,
+                  //     child: Button_Widget(
+                  //         context, 'Cheeni Brokery', Colors.black, () {
+                  //       // Navigator.of(context).push(
+                  //       //   MaterialPageRoute(
+                  //       //     builder: (context) => const CheeniBrokeryScreen(),
+                  //       //   ),
+                  //       // );
+                  //     })),
                 ],
               ),
               const SizedBox(height: 10),

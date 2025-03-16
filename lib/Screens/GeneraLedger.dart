@@ -1,4 +1,3 @@
-import 'package:baboo_and_co/Components/snackBar.dart';
 import 'package:baboo_and_co/Services/GsheetApi.dart';
 import 'package:baboo_and_co/Widgets/Button.dart';
 import 'package:flutter/material.dart';
@@ -45,6 +44,8 @@ class _CustomerKhataState extends State<DailyCashBook> {
                     row[3].toLowerCase().contains(query.toLowerCase()));
           })
           .map((entry) => {"index": entry.key, "row": entry.value})
+          .toList()
+          .reversed
           .toList();
     });
   }
@@ -118,9 +119,9 @@ class _CustomerKhataState extends State<DailyCashBook> {
                                 DataColumn(
                                     label: Text('Naam',
                                         style: TextStyle(fontSize: 18))),
-                                DataColumn(
-                                    label: Text('Quantity',
-                                        style: TextStyle(fontSize: 18))),
+                                // DataColumn(
+                                //     label: Text('Quantity',
+                                //         style: TextStyle(fontSize: 18))),
                                 DataColumn(
                                     label: Text('Amount',
                                         style: TextStyle(fontSize: 18))),
@@ -137,11 +138,11 @@ class _CustomerKhataState extends State<DailyCashBook> {
 
                                 return DataRow(cells: [
                                   DataCell(Text((realIndex + 1).toString())),
-                                  DataCell(Text(row[0])),
+                                  DataCell(Text(row[0].replaceAll("'", ""))),
                                   DataCell(Text(row[1])),
                                   DataCell(Text(row[2])),
                                   DataCell(Text(row[3])),
-                                  DataCell(Text(row[4])),
+                                  // DataCell(Text(row[4])),
                                   DataCell(Text(row[5])),
                                   DataCell(InkWell(
                                       onTap: () => editEntry(realIndex, row),
@@ -163,13 +164,16 @@ class _CustomerKhataState extends State<DailyCashBook> {
   }
 
   void editEntry(int index, List<String> row) {
-    TextEditingController dateController = TextEditingController(text: row[0]);
+    TextEditingController dateController =
+        TextEditingController(text: row[0].replaceAll("'", ""));
     TextEditingController jamaController = TextEditingController(text: row[1]);
     TextEditingController naamController = TextEditingController(text: row[3]);
     TextEditingController quantityController =
         TextEditingController(text: row[4]);
     TextEditingController amountController =
         TextEditingController(text: row[5]);
+    TextEditingController tafseelController =
+        TextEditingController(text: row.length > 6 ? row[6] : '');
 
     bool isDateValid = true;
 
@@ -205,6 +209,10 @@ class _CustomerKhataState extends State<DailyCashBook> {
                       controller: amountController,
                       decoration: const InputDecoration(labelText: 'Amount'),
                       keyboardType: TextInputType.number),
+                  TextField(
+                      controller: tafseelController,
+                      decoration: const InputDecoration(labelText: 'Tafseel'),
+                      keyboardType: TextInputType.text),
                 ],
               ),
               actions: [
@@ -219,12 +227,13 @@ class _CustomerKhataState extends State<DailyCashBook> {
                     }
 
                     List<String> updatedRow = [
-                      "'${dateController.text}'",
+                      dateController.text,
                       jamaController.text,
                       row[2],
                       naamController.text,
                       quantityController.text,
-                      amountController.text
+                      amountController.text,
+                      tafseelController.text
                     ];
 
                     await UserSheetsApi.updateRow(index + 2, updatedRow);

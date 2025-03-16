@@ -7,7 +7,6 @@ import 'package:quickalert/models/quickalert_type.dart';
 import 'package:quickalert/widgets/quickalert_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:baboo_and_co/Components/snackBar.dart';
 
 class Todaycb extends StatefulWidget {
@@ -64,10 +63,11 @@ class _HomePageState extends State<Todaycb> {
     }
 
     setState(() {
-      typeSuggestions = typeSet.toList();
+      typeSuggestions = typeSet
+          .toSet() // Remove duplicates
+          .where((item) => item.isNotEmpty && item != "Type" && item != "")
+          .toList();
     });
-
-    print("Updated Type Suggestions: $typeSuggestions");
   }
 
   bool uploadingProgress = false;
@@ -79,31 +79,12 @@ class _HomePageState extends State<Todaycb> {
   ];
   String? selectedValue;
 
-  KeyEventResult handleKeyEvent(
-      FocusNode current, FocusNode next, RawKeyEvent event) {
-    if (event is RawKeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.enter) {
-      FocusScope.of(context).requestFocus(next);
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
-  }
-
   @override
   void initState() {
     super.initState();
     _loadData();
     _fetchAutocompleteData();
     _fetchTypeAutocompleteData();
-
-    focusNodes = [
-      dateFocus,
-      jamaFocus,
-      typeFocus,
-      naamFocus,
-      amountFocus,
-      tafseelFocus,
-    ];
   }
 
   // Load saved data from local storage
@@ -218,10 +199,10 @@ class _HomePageState extends State<Todaycb> {
                 controller: naamController,
                 decoration: const InputDecoration(labelText: 'Naam'),
               ),
-              TextField(
-                // controller: qntyController,
-                decoration: const InputDecoration(labelText: 'Quantity'),
-              ),
+              // TextField(
+              //   controller: qntyController,
+              //   decoration: const InputDecoration(labelText: 'Quantity'),
+              // ),
               const SizedBox(height: 10),
               TextField(
                 controller: amountController,
@@ -293,15 +274,6 @@ class _HomePageState extends State<Todaycb> {
     return regex.hasMatch(date);
   }
 
-  // Focus Nodes
-  final FocusNode dateFocus = FocusNode();
-  final FocusNode amountFocus = FocusNode();
-  final FocusNode tafseelFocus = FocusNode();
-
-  // List of FocusNodes for easy navigation
-  late List<FocusNode> focusNodes;
-  int currentIndex = 0;
-
   @override
   void dispose() {
     dateController.dispose();
@@ -310,39 +282,20 @@ class _HomePageState extends State<Todaycb> {
     naamController.dispose();
     amountController.dispose();
     tafseelController.dispose();
-
-    for (var node in focusNodes) {
-      node.dispose();
-    }
     super.dispose();
   }
 
-  void _handleKeyEvent(RawKeyEvent event) {
-    if (event is RawKeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.arrowRight ||
-          event.logicalKey == LogicalKeyboardKey.enter) {
-        _moveFocus(1); // Move to next field
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-        _moveFocus(-1); // Move to previous field
-      }
-    }
-  }
-
-  void _moveFocus(int step) {
-    setState(() {
-      currentIndex = (currentIndex + step) % focusNodes.length;
-      focusNodes[currentIndex].requestFocus();
-    });
-  }
-
-  FocusNode jamaFocus = FocusNode();
-  FocusNode typeFocus = FocusNode();
-  FocusNode naamFocus = FocusNode();
-
   @override
   Widget build(BuildContext context) {
-    List<String> combinedSuggestions =
-        naamSuggestions + jamaSuggestions; // Merge lists
+    List<String> combinedSuggestions = (naamSuggestions + jamaSuggestions)
+        .toSet() // Remove duplicates
+        .where((item) =>
+            item.isNotEmpty &&
+            item != "Naam" &&
+            item != "Jama" &&
+            item != "Type" &&
+            item != "")
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -352,279 +305,297 @@ class _HomePageState extends State<Todaycb> {
       ),
       body: Column(
         children: [
-          RawKeyboardListener(
-            focusNode: FocusNode(), // To capture keyboard events
-            onKey: _handleKeyEvent,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: TextField(
-                            controller: dateController,
-                            decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: 'Date \'DD-MM-YYYY\''),
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          flex: 3,
-                          child: Autocomplete<String>(
-                            optionsBuilder:
-                                (TextEditingValue textEditingValue) {
-                              if (textEditingValue.text.isEmpty) {
-                                return const Iterable<String>.empty();
-                              }
-                              return combinedSuggestions.where((option) =>
-                                  option.toLowerCase().contains(
-                                      textEditingValue.text.toLowerCase()));
-                            },
-                            onSelected: (String selection) {
-                              jamaController.text = selection;
-                            },
-                            fieldViewBuilder: (context, textFieldController,
-                                focusNode, onEditingComplete) {
-                              textFieldController.text = jamaController.text;
-                              textFieldController.addListener(() {
-                                jamaController.text = textFieldController.text;
-                              });
-
-                              return TextField(
-                                controller: textFieldController,
-                                focusNode: focusNode,
-                                onEditingComplete: onEditingComplete,
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  hintText: 'Jama \'Credit\'',
-                                ),
-                                style: const TextStyle(fontSize: 20),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          flex: 2,
-                          child: Autocomplete<String>(
-                            optionsBuilder:
-                                (TextEditingValue textEditingValue) {
-                              return typeSuggestions.where((option) => option
-                                  .toLowerCase()
-                                  .contains(
-                                      textEditingValue.text.toLowerCase()));
-                            },
-                            onSelected: (String selection) {
-                              typeController.text = selection;
-                            },
-                            fieldViewBuilder: (context, textFieldController,
-                                focusNode, onEditingComplete) {
-                              textFieldController.text = typeController.text;
-
-                              textFieldController.addListener(() {
-                                if (textFieldController.text !=
-                                    typeController.text) {
-                                  typeController.text =
-                                      textFieldController.text;
-                                }
-                              });
-
-                              return TextField(
-                                controller:
-                                    textFieldController, // Use textFieldController here
-                                focusNode: focusNode,
-                                onEditingComplete: onEditingComplete,
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  hintText: 'Online/Gud Bill/Cheeni Brokery',
-                                ),
-                                style: const TextStyle(fontSize: 20),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          flex: 3,
-                          child: Autocomplete<String>(
-                            optionsBuilder:
-                                (TextEditingValue textEditingValue) {
-                              if (textEditingValue.text.isEmpty) {
-                                return const Iterable<String>.empty();
-                              }
-                              return combinedSuggestions.where((option) =>
-                                  option.toLowerCase().contains(
-                                      textEditingValue.text.toLowerCase()));
-                            },
-                            onSelected: (String selection) {
-                              naamController.text = selection;
-                            },
-                            fieldViewBuilder: (context, textFieldController,
-                                focusNode, onEditingComplete) {
-                              textFieldController.text = naamController.text;
-                              textFieldController.addListener(() {
-                                naamController.text = textFieldController.text;
-                              });
-
-                              return TextField(
-                                controller: textFieldController,
-                                focusNode: focusNode,
-                                onEditingComplete: onEditingComplete,
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  hintText: 'Naam \'Debit\'',
-                                ),
-                                style: const TextStyle(fontSize: 20),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        // Expanded(
-                        //   child: TextField(
-                        //     // controller: qntyController,
-                        //     decoration: const InputDecoration(
-                        //         border: OutlineInputBorder(), hintText: 'Quantity'),
-                        //     style: const TextStyle(fontSize: 20),
-                        //   ),
-                        // ),
-                        const SizedBox(
-                            width: 25,
-                            child: Center(
-                                child: Text('= ',
-                                    style: TextStyle(
-                                        fontSize: 30,
-                                        fontWeight: FontWeight.bold)))),
-                        Expanded(
-                          flex: 2,
-                          child: TextField(
-                            controller: amountController,
-                            decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: 'Rakam \'Amount\''),
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left: 20, right: 20, top: 10, bottom: 10),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: tafseelController,
-                            decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: 'Tafseel \'Details\''),
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
           Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
               children: [
-                SizedBox(
-                  width: 300,
-                  height: 50,
-                  child: Button_Widget(context, 'Clear List', Colors.red, () {
-                    QuickAlert.show(
-                      context: context,
-                      type: QuickAlertType.confirm,
-                      text: 'Do you want to clear all entries?',
-                      confirmBtnText: 'Yes',
-                      cancelBtnText: 'No',
-                      confirmBtnColor: Colors.green,
-                      onConfirmBtnTap: () {
-                        setState(() {
-                          savedData.clear();
-                          _saveData(); // Save after clearing all
-                        });
-                        Navigator.pop(context);
-                      },
-                      onCancelBtnTap: () => Navigator.pop(context),
-                    );
-                  }),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: dateController,
+                          decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Date \'DD-MM-YYYY\''),
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        flex: 3,
+                        child: Autocomplete<String>(
+                          optionsBuilder: (TextEditingValue textEditingValue) {
+                            if (textEditingValue.text.isEmpty) {
+                              return const Iterable<String>.empty();
+                            }
+                            return combinedSuggestions.where((option) => option
+                                .toLowerCase()
+                                .contains(textEditingValue.text.toLowerCase()));
+                          },
+                          onSelected: (String selection) {
+                            jamaController.text = selection;
+                          },
+                          fieldViewBuilder: (context, textFieldController,
+                              focusNode, onEditingComplete) {
+                            textFieldController.text = jamaController.text;
+                            textFieldController.addListener(() {
+                              jamaController.text = textFieldController.text;
+                            });
+
+                            return TextField(
+                              controller: textFieldController,
+                              focusNode: focusNode,
+                              onEditingComplete: onEditingComplete,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Jama \'Credit\'',
+                              ),
+                              style: const TextStyle(fontSize: 20),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        flex: 2,
+                        child: Autocomplete<String>(
+                          optionsBuilder: (TextEditingValue textEditingValue) {
+                            return typeSuggestions.where((option) => option
+                                .toLowerCase()
+                                .contains(textEditingValue.text.toLowerCase()));
+                          },
+                          onSelected: (String selection) {
+                            typeController.text = selection;
+                          },
+                          fieldViewBuilder: (context, textFieldController,
+                              focusNode, onEditingComplete) {
+                            textFieldController.text = typeController.text;
+
+                            textFieldController.addListener(() {
+                              if (textFieldController.text !=
+                                  typeController.text) {
+                                typeController.text = textFieldController.text;
+                              }
+                            });
+
+                            return TextField(
+                              controller:
+                                  textFieldController, // Use textFieldController here
+                              focusNode: focusNode,
+                              onEditingComplete: onEditingComplete,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Online/Gud Bill/Cheeni Brokery',
+                              ),
+                              style: const TextStyle(fontSize: 20),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        flex: 3,
+                        child: Autocomplete<String>(
+                          optionsBuilder: (TextEditingValue textEditingValue) {
+                            if (textEditingValue.text.isEmpty) {
+                              return const Iterable<String>.empty();
+                            }
+                            return combinedSuggestions.where((option) => option
+                                .toLowerCase()
+                                .contains(textEditingValue.text.toLowerCase()));
+                          },
+                          onSelected: (String selection) {
+                            naamController.text = selection;
+                          },
+                          fieldViewBuilder: (context, textFieldController,
+                              focusNode, onEditingComplete) {
+                            textFieldController.text = naamController.text;
+                            textFieldController.addListener(() {
+                              naamController.text = textFieldController.text;
+                            });
+
+                            return TextField(
+                              controller: textFieldController,
+                              focusNode: focusNode,
+                              onEditingComplete: onEditingComplete,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Naam \'Debit\'',
+                              ),
+                              style: const TextStyle(fontSize: 20),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      // Expanded(
+                      //   child: TextField(
+                      //     // controller: qntyController,
+                      //     decoration: const InputDecoration(
+                      //         border: OutlineInputBorder(), hintText: 'Quantity'),
+                      //     style: const TextStyle(fontSize: 20),
+                      //   ),
+                      // ),
+                      const SizedBox(
+                          width: 25,
+                          child: Center(
+                              child: Text('= ',
+                                  style: TextStyle(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.bold)))),
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: amountController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Allow only numbers
+                            TextInputFormatter.withFunction(
+                                (oldValue, newValue) {
+                              String text = newValue.text
+                                  .replaceAll(',', ''); // Remove old commas
+                              if (text.isEmpty) return newValue;
+
+                              final formatter = NumberFormat.decimalPattern(
+                                  'en_IN'); // Indian format
+                              String formattedText =
+                                  formatter.format(int.parse(text));
+
+                              return TextEditingValue(
+                                text: formattedText,
+                                selection: TextSelection.collapsed(
+                                    offset: formattedText.length),
+                              );
+                            }),
+                          ],
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            hintText: 'Rakam \'Amount\'',
+                          ),
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      )
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 20),
-                SizedBox(
-                  width: 300,
-                  height: 50,
-                  child: Button_Widget(context, 'Clear All Inputs', Colors.red,
-                      () {
-                    setState(() {
-                      jamaController.clear();
-                      naamController.clear();
-                      // qntyController.clear();
-                      amountController.clear();
-                      tafseelController.clear();
-                    });
-                  }),
-                ),
-                const SizedBox(width: 20),
-                SizedBox(
-                  width: 300,
-                  height: 50,
-                  child: Button_Widget(
-                      context, 'Save Now!', Colors.blue, saveData),
-                ),
-                const SizedBox(width: 20),
-                SizedBox(
-                  width: 300,
-                  height: 50,
-                  child: uploadingProgress
-                      ? const Center(child: CircularProgressIndicator())
-                      : Button_Widget(context, 'Upload Now!', Colors.blue[900]!,
-                          () async {
-                          if (savedData.isEmpty) {
-                            CustomSnackBar(
-                                context, const Text('No data to upload!'));
-                            return;
-                          }
-
-                          setState(() {
-                            uploadingProgress = true;
-                          });
-
-                          for (var entry in savedData) {
-                            await UserSheetsApi.insertRow([
-                              entry['Date'] ?? '',
-                              entry['Jama'] ?? '',
-                              entry['Type'] ?? '',
-                              entry['Naam'] ?? '',
-                              entry['Quantity'] ?? '',
-                              entry['Amount'] ?? '',
-                              entry['Details'] ?? ''
-                            ]);
-                          }
-
-                          setState(() {
-                            uploadingProgress = false;
-                            savedData.clear();
-                          });
-
-                          CustomSnackBar(context,
-                              const Text('Data uploaded successfully!'));
+                Padding(
+                  padding: const EdgeInsets.only(
+                      left: 20, right: 20, top: 10, bottom: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: tafseelController,
+                          decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Tafseel \'Details\''),
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 200,
+                        height: 50,
+                        child: Button_Widget(context, 'Clear List', Colors.red,
+                            () {
+                          QuickAlert.show(
+                            context: context,
+                            type: QuickAlertType.confirm,
+                            text: 'Do you want to clear all entries?',
+                            confirmBtnText: 'Yes',
+                            cancelBtnText: 'No',
+                            confirmBtnColor: Colors.green,
+                            onConfirmBtnTap: () {
+                              setState(() {
+                                savedData.clear();
+                                _saveData(); // Save after clearing all
+                              });
+                              Navigator.pop(context);
+                            },
+                            onCancelBtnTap: () => Navigator.pop(context),
+                          );
                         }),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 200,
+                        height: 50,
+                        child: Button_Widget(
+                            context, 'Clear All Inputs', Colors.red, () {
+                          setState(() {
+                            jamaController.clear();
+                            naamController.clear();
+                            // qntyController.clear();
+                            amountController.clear();
+                            tafseelController.clear();
+                          });
+                        }),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 200,
+                        height: 50,
+                        child: Button_Widget(
+                            context, 'Save Now!', Colors.blue, saveData),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 200,
+                        height: 50,
+                        child: uploadingProgress
+                            ? const Center(child: CircularProgressIndicator())
+                            : Button_Widget(
+                                context, 'Upload Now!', Colors.blue[900]!,
+                                () async {
+                                if (savedData.isEmpty) {
+                                  CustomSnackBar(context,
+                                      const Text('No data to upload!'));
+                                  return;
+                                }
+
+                                setState(() {
+                                  uploadingProgress = true;
+                                });
+
+                                for (var entry in savedData) {
+                                  await UserSheetsApi.insertRow([
+                                    entry['Date'] ?? '',
+                                    entry['Jama'] ?? '',
+                                    entry['Type'] ?? '',
+                                    entry['Naam'] ?? '',
+                                    entry['Quantity'] ?? '',
+                                    (entry['Amount'] ?? '')
+                                        .toString()
+                                        .replaceAll(',', ''),
+                                    entry['Details'] ?? ''
+                                  ]);
+                                }
+
+                                setState(() {
+                                  uploadingProgress = false;
+                                  savedData.clear();
+                                });
+
+                                CustomSnackBar(context,
+                                    const Text('Data uploaded successfully!'));
+                              }),
+                      ),
+                    ],
+                  ),
                 ),
               ],
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.all(20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [],
             ),
           ),
           savedData.isNotEmpty

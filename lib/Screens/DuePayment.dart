@@ -1,5 +1,6 @@
 import 'package:baboo_and_co/Services/GsheetApi.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -251,7 +252,7 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
                               ...dues.map((due) => Padding(
                                     padding:
                                         const EdgeInsets.only(left: 10, top: 5),
-                                    child: Text(due,
+                                    child: Text(due.replaceAll("'", ""),
                                         style: const TextStyle(
                                             fontSize: 16, color: Colors.red)),
                                   )),
@@ -305,7 +306,7 @@ class SelectedAccountsScreen extends StatelessWidget {
         margin: const pw.EdgeInsets.all(20),
         build: (pw.Context context) {
           return [
-            pw.Text("Selected Accounts",
+            pw.Text(DateFormat('dd-MM-yyyy').format(DateTime.now()),
                 style:
                     pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 10),
@@ -384,7 +385,6 @@ class SelectedAccountsScreen extends StatelessWidget {
               );
             }).toList(),
 
-            pw.Divider(),
             pw.Text("Grand Total Due: ${grandTotalDue.toStringAsFixed(0)}",
                 style: pw.TextStyle(
                     fontSize: 18,

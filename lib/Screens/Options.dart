@@ -51,14 +51,26 @@ class _OptionsScreenState extends State<OptionsScreen> {
         children: [
           Center(
             child: SizedBox(
-                width: 600,
                 height: 400,
-                child: Image.asset('assets/logo.jpeg')),
+                width: 600,
+                child: Card(
+                  semanticContainer: true,
+                  clipBehavior: Clip.antiAliasWithSaveLayer,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  elevation: 5,
+                  margin: const EdgeInsets.all(10),
+                  child: Image.asset(
+                    'assets/logo.jpeg',
+                    fit: BoxFit.fill,
+                  ),
+                )),
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // SizedBox(

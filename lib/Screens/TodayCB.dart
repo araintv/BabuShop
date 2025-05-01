@@ -75,7 +75,9 @@ class _HomePageState extends State<Todaycb> {
   final List<String> items = [
     'Online',
     'Good Bill',
-    'Cheeni Brokery',
+    'Wheat',
+    'Others',
+    'Sugar',
   ];
   String? selectedValue;
 

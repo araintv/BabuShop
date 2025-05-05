@@ -40,8 +40,12 @@ class _CustomerKhataState extends State<DailyCashBook> {
           .where((entry) {
             List<String> row = entry.value;
             return row.length >= 4 &&
-                (row[1].toLowerCase().contains(query.toLowerCase()) ||
-                    row[3].toLowerCase().contains(query.toLowerCase()));
+                (row[0].toLowerCase().contains(query.toLowerCase()) || // Date
+                    row[1]
+                        .toLowerCase()
+                        .contains(query.toLowerCase()) || // Jama
+                    row[3].toLowerCase().contains(query.toLowerCase()) ||
+                    row[5].toLowerCase().contains(query.toLowerCase())); // Naam
           })
           .map((entry) => {"index": entry.key, "row": entry.value})
           .toList()

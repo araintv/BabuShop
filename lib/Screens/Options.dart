@@ -16,19 +16,19 @@ class OptionsScreen extends StatefulWidget {
 
 class _OptionsScreenState extends State<OptionsScreen> {
   Map<String, double> accountBalances = {
-    "UBL Ali": 0.0,
     "UBL Babu": 0.0,
-    "UBL Abu": 0.0,
-    "AlHabib Babu": 0.0,
-    "AlHabib Ali": 0.0,
-    "AlHabib Abu": 0.0,
     "Meezan Babu": 0.0,
-    "Meezan Ali": 0.0,
-    "Meezan Abu": 0.0,
-    "MCB Ali": 0.0,
+    "AlHabib Babu": 0.0,
     "Allied Babu": 0.0,
-    "Allied Ali": 0.0,
     "HBL Babu": 0.0,
+    "UBL Ali": 0.0,
+    "Meezan Ali": 0.0,
+    "AlHabib Ali": 0.0,
+    "Allied Ali": 0.0,
+    "MCB Ali": 0.0,
+    "UBL Abu": 0.0,
+    "Meezan Abu": 0.0,
+    "AlHabib Abu": 0.0,
     "Faisal Bank Ali": 0.0,
     "Islami Bank Ali": 0.0,
   };
@@ -83,9 +83,9 @@ class _OptionsScreenState extends State<OptionsScreen> {
                 itemCount: accountBalances.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 5, // Adjust to fit your screen
-                  childAspectRatio: 3,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
+                  childAspectRatio: 2.9,
+                  crossAxisSpacing: 1,
+                  mainAxisSpacing: 1,
                 ),
                 itemBuilder: (context, index) {
                   String account = accountBalances.keys.elementAt(index);
@@ -104,14 +104,14 @@ class _OptionsScreenState extends State<OptionsScreen> {
                           Text(
                             account,
                             style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w500),
+                                fontSize: 18, fontWeight: FontWeight.w500),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 5),
                           Text(
                             "${balance >= 0 ? "+" : ""}${balance.toStringAsFixed(0)}",
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: balance >= 0 ? Colors.green : Colors.red,
                             ),

@@ -59,7 +59,6 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
       }
     }
 
-    // Apply Payments Chronologically
     Map<String, List<Map<String, dynamic>>> remainingDues = {};
 
     accountDueDetails.forEach((account, transactions) {
@@ -74,19 +73,16 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
         }
       }
 
-      // Sort dues by date (oldest first)
       dues.sort((a, b) => a["date"].compareTo(b["date"]));
 
-      // Process Payments against Due
       for (var payment in payments) {
         double remainingPayment = payment["amount"];
         for (var due in dues) {
           if (remainingPayment <= 0) break;
-
           double dueAmount = due["amount"];
           if (remainingPayment >= dueAmount) {
             remainingPayment -= dueAmount;
-            due["amount"] = 0.0; // Fully paid
+            due["amount"] = 0.0;
           } else {
             due["amount"] -= remainingPayment;
             remainingPayment = 0.0;
@@ -94,15 +90,32 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
         }
       }
 
-      // Keep only unpaid dues with amounts >= 1000
-      List<Map<String, dynamic>> filteredDues =
-          dues.where((d) => d["amount"] >= 1000).toList();
-      if (filteredDues.isNotEmpty) {
-        remainingDues[account] = filteredDues;
+      List<Map<String, dynamic>> unpaidDues =
+          dues.where((d) => d["amount"] > 0).toList();
+      double totalDue = unpaidDues.fold(0.0, (sum, d) => sum + d["amount"]);
+
+      if (totalDue >= 1000) {
+        unpaidDues
+            .sort((a, b) => b["date"].compareTo(a["date"])); // latest first
+
+        List<Map<String, dynamic>> partials = [];
+        double remaining = totalDue;
+        for (var due in unpaidDues) {
+          if (remaining <= 0) break;
+          double amount = due["amount"];
+          if (remaining >= amount) {
+            partials.add({"date": due["date"], "amount": amount});
+            remaining -= amount;
+          } else {
+            partials.add({"date": due["date"], "amount": remaining});
+            break;
+          }
+        }
+
+        remainingDues[account] = partials;
       }
     });
 
-    // Group Data for Display
     Map<String, List<String>> groupedData = {};
     List<Map<String, String>> allData = [];
 
@@ -139,7 +152,6 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
         String name = entry["Name"]!;
         double dueAmount = double.tryParse(entry["Due Amount"]!) ?? 0.0;
 
-        // Show only accounts with dues >= 1000 and matching the search query
         if (dueAmount >= 1000 && name.toLowerCase().contains(query)) {
           groupedData.putIfAbsent(name, () => []);
           groupedData[name]!.add("${entry["Date"]} - ${entry["Due Amount"]}");
@@ -252,9 +264,11 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
                               ...dues.map((due) => Padding(
                                     padding:
                                         const EdgeInsets.only(left: 10, top: 5),
-                                    child: Text(due.replaceAll("'", ""),
-                                        style: const TextStyle(
-                                            fontSize: 16, color: Colors.red)),
+                                    child: Text(
+                                      due.replaceAll("'", ""),
+                                      style: const TextStyle(
+                                          fontSize: 16, color: Colors.red),
+                                    ),
                                   )),
                               const Divider(),
                               Text(

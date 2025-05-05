@@ -232,10 +232,10 @@ class _KhataScreenState extends State<KhataScreen> {
                                     Expanded(
                                       flex: 2,
                                       child: Text(
-                                        entry["Details"] ?? "---",
-                                        maxLines: 2,
+                                        '${entry["Details"] ?? "---"} - ${searchController.text == entry["Naam"] ? entry["Jama"] : searchController.text == "${entry["Jama"]}" ? entry["Naam"] : ""}',
+                                        maxLines: 3,
                                         style: TextStyle(
-                                            fontSize: screenWidth * 0.015),
+                                            fontSize: screenWidth * 0.010),
                                       ),
                                     ),
                                     Expanded(
@@ -246,7 +246,9 @@ class _KhataScreenState extends State<KhataScreen> {
                                               ? amount.toStringAsFixed(0)
                                               : "---",
                                           style: TextStyle(
-                                              fontSize: screenWidth * 0.025,
+                                              fontSize: isCredit
+                                                  ? screenWidth * 0.025
+                                                  : screenWidth * 0.015,
                                               color: Colors.green),
                                         ),
                                       ),
@@ -259,7 +261,9 @@ class _KhataScreenState extends State<KhataScreen> {
                                               ? amount.toStringAsFixed(0)
                                               : "---",
                                           style: TextStyle(
-                                              fontSize: screenWidth * 0.025,
+                                              fontSize: isDebit
+                                                  ? screenWidth * 0.025
+                                                  : screenWidth * 0.015,
                                               color: Colors.red),
                                         ),
                                       ),

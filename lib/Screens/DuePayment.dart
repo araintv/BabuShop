@@ -40,7 +40,10 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
     setState(() => isLoading = true);
     final data = await UserSheetsApi.fetchAllRows();
 
-    Map<String, List<Map<String, dynamic>>> accountDueDetails = {};
+    Map<String, List<Map<String, dynamic>>> accountDetails = {};
+
+    // Date format definition for parsing
+    DateFormat dateFormat = DateFormat("dd-MM-yyyy");
 
     for (var row in data.skip(1)) {
       String date = row.isNotEmpty ? row[0].trim() : "Unknown Date";
@@ -50,76 +53,137 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
           row.length > 5 ? (double.tryParse(row[5].trim()) ?? 0.0) : 0.0;
 
       if (naamName != null && naamName.isNotEmpty) {
-        accountDueDetails.putIfAbsent(naamName, () => []);
-        accountDueDetails[naamName]!.add({"date": date, "due": amount});
+        accountDetails.putIfAbsent(naamName, () => []);
+        accountDetails[naamName]!
+            .add({"type": "due", "date": date, "amount": amount});
       }
       if (jamaName != null && jamaName.isNotEmpty) {
-        accountDueDetails.putIfAbsent(jamaName, () => []);
-        accountDueDetails[jamaName]!.add({"date": date, "paid": amount});
+        accountDetails.putIfAbsent(jamaName, () => []);
+        accountDetails[jamaName]!
+            .add({"type": "paid", "date": date, "amount": amount});
       }
     }
 
-    Map<String, List<Map<String, dynamic>>> remainingDues = {};
+    Map<String, List<Map<String, dynamic>>> partialsMap = {};
 
-    accountDueDetails.forEach((account, transactions) {
+    accountDetails.forEach((account, transactions) {
+      double totalDue = 0.0;
+
       List<Map<String, dynamic>> dues = [];
       List<Map<String, dynamic>> payments = [];
 
       for (var txn in transactions) {
-        if (txn.containsKey("due")) {
-          dues.add({"date": txn["date"], "amount": txn["due"]});
-        } else if (txn.containsKey("paid")) {
-          payments.add({"amount": txn["paid"]});
+        if (txn["type"] == "due") {
+          dues.add(txn);
+          totalDue += txn["amount"];
+        } else if (txn["type"] == "paid") {
+          payments.add(txn);
         }
       }
 
-      dues.sort((a, b) => a["date"].compareTo(b["date"]));
+      // Apply payments to dues from earliest first
+      dues.sort((a, b) {
+        String dateA = a["date"];
+        String dateB = b["date"];
+
+        if (dateA.isEmpty || dateB.isEmpty)
+          return 0; // Handle empty dates gracefully
+
+        try {
+          DateTime parsedDateA = dateFormat.parse(dateA);
+          DateTime parsedDateB = dateFormat.parse(dateB);
+          return parsedDateA.compareTo(
+              parsedDateB); // Compare by full date (day, month, year)
+        } catch (e) {
+          return 0; // Return 0 if there is an error parsing the date (it won't affect sorting)
+        }
+      });
+
+      payments.sort((a, b) {
+        String dateA = a["date"];
+        String dateB = b["date"];
+
+        if (dateA.isEmpty || dateB.isEmpty)
+          return 0; // Handle empty dates gracefully
+
+        try {
+          DateTime parsedDateA = dateFormat.parse(dateA);
+          DateTime parsedDateB = dateFormat.parse(dateB);
+          return parsedDateA.compareTo(
+              parsedDateB); // Compare by full date (day, month, year)
+        } catch (e) {
+          return 0; // Return 0 if there is an error parsing the date (it won't affect sorting)
+        }
+      });
 
       for (var payment in payments) {
-        double remainingPayment = payment["amount"];
+        double paymentAmount = payment["amount"];
         for (var due in dues) {
-          if (remainingPayment <= 0) break;
-          double dueAmount = due["amount"];
-          if (remainingPayment >= dueAmount) {
-            remainingPayment -= dueAmount;
+          if (paymentAmount <= 0) break;
+          if (due["amount"] <= 0) continue;
+
+          if (paymentAmount >= due["amount"]) {
+            paymentAmount -= due["amount"];
             due["amount"] = 0.0;
           } else {
-            due["amount"] -= remainingPayment;
-            remainingPayment = 0.0;
+            due["amount"] -= paymentAmount;
+            paymentAmount = 0.0;
           }
         }
       }
 
+      // Get unpaid dues and apply the reverse partial logic
       List<Map<String, dynamic>> unpaidDues =
           dues.where((d) => d["amount"] > 0).toList();
-      double totalDue = unpaidDues.fold(0.0, (sum, d) => sum + d["amount"]);
 
-      if (totalDue >= 1000) {
-        unpaidDues
-            .sort((a, b) => b["date"].compareTo(a["date"])); // latest first
+      unpaidDues.sort((a, b) {
+        String dateA = a["date"];
+        String dateB = b["date"];
 
-        List<Map<String, dynamic>> partials = [];
-        double remaining = totalDue;
-        for (var due in unpaidDues) {
-          if (remaining <= 0) break;
-          double amount = due["amount"];
-          if (remaining >= amount) {
-            partials.add({"date": due["date"], "amount": amount});
-            remaining -= amount;
-          } else {
-            partials.add({"date": due["date"], "amount": remaining});
-            break;
-          }
+        if (dateA.isEmpty || dateB.isEmpty)
+          return 0; // Handle empty dates gracefully
+
+        try {
+          DateTime parsedDateA = dateFormat.parse(dateA);
+          DateTime parsedDateB = dateFormat.parse(dateB);
+          return parsedDateB
+              .compareTo(parsedDateA); // Sort from newest to oldest
+        } catch (e) {
+          return 0; // Return 0 if there is an error parsing the date (it won't affect sorting)
         }
+      });
 
-        remainingDues[account] = partials;
+      double remaining = unpaidDues.fold(0.0, (sum, d) => sum + d["amount"]);
+      double totalToCover = remaining;
+
+      List<Map<String, dynamic>> partials = [];
+
+      for (var due in unpaidDues) {
+        if (totalToCover <= 0) break;
+
+        double dueAmount = due["amount"];
+        if (totalToCover >= dueAmount) {
+          partials.add({"date": due["date"], "amount": dueAmount});
+          totalToCover -= dueAmount;
+        } else {
+          partials.add({"date": due["date"], "amount": totalToCover});
+          totalToCover = 0;
+        }
+      }
+
+      // Reverse to show oldest partial first
+      partials = partials.reversed.toList();
+
+      if (remaining >= 1000) {
+        partialsMap[account] = partials;
       }
     });
 
+    // Prepare display data
     Map<String, List<String>> groupedData = {};
     List<Map<String, String>> allData = [];
 
-    for (var entry in remainingDues.entries) {
+    for (var entry in partialsMap.entries) {
       String accountName = entry.key;
       List<String> dueEntries = entry.value
           .map((due) => "${due["date"]} - ${due["amount"].toStringAsFixed(0)}")

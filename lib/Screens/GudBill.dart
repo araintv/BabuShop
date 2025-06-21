@@ -317,6 +317,7 @@ class _GudBillScreenState extends State<GudBillScreen> {
                             ),
                             items: [
                               "Lahori Corporation LQP",
+                              "Talib Hussain LQP",
                               "Al Hilal Corporation",
                               "Liaqat Amjad Yazman"
                             ]

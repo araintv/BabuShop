@@ -320,6 +320,7 @@ class _HomePageState extends State<Todaycb> {
                         flex: 2,
                         child: TextField(
                           controller: dateController,
+                          keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
                               border: OutlineInputBorder(),
                               hintText: 'Date \'DD-MM-YYYY\''),
@@ -492,6 +493,7 @@ class _HomePageState extends State<Todaycb> {
                     children: [
                       Expanded(
                         child: TextField(
+                          keyboardType: TextInputType.text,
                           controller: tafseelController,
                           decoration: const InputDecoration(
                               border: OutlineInputBorder(),

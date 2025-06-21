@@ -304,11 +304,13 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Text(
-                                    accountName,
-                                    style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
+                                  Expanded(
+                                    child: Text(
+                                      accountName,
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold),
+                                    ),
                                   ),
                                   Checkbox(
                                     value:

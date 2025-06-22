@@ -1,5 +1,8 @@
+import 'package:baboo_and_co/Components/snackBar.dart';
 import 'package:baboo_and_co/Services/GsheetApi.dart';
+import 'package:baboo_and_co/Widgets/DuePaymentWidget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:io';
@@ -243,10 +246,8 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
               ),
             );
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Text("Please select at least one account")),
-            );
+            CustomSnackBar(
+                context, const Text("Please Select at Least One Account"));
           }
         },
         child: const Icon(Icons.check),
@@ -270,84 +271,17 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
                   ),
                 ),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: groupedData.keys.length,
-                    itemBuilder: (context, index) {
-                      String accountName = groupedData.keys.elementAt(index);
-                      List<String> dues = groupedData[accountName]!;
-
-                      double totalDueAmount = dues.fold(0.0, (sum, due) {
-                        final parts = due.split(" - ");
-                        if (parts.length > 1) {
-                          double amount = double.tryParse(parts[1]) ?? 0.0;
-                          return sum + amount;
+                  child: DueGrid(
+                    groupedData: groupedData,
+                    selectedAccounts: selectedAccounts,
+                    onAccountToggle: (name, isSelected) {
+                      setState(() {
+                        if (isSelected) {
+                          selectedAccounts.add(name);
+                        } else {
+                          selectedAccounts.remove(name);
                         }
-                        return sum;
                       });
-
-                      return Card(
-                        elevation: 0,
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(
-                            color: Colors.black.withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 5, horizontal: 10),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      accountName,
-                                      style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  Checkbox(
-                                    value:
-                                        selectedAccounts.contains(accountName),
-                                    onChanged: (bool? value) {
-                                      setState(() {
-                                        if (value == true) {
-                                          selectedAccounts.add(accountName);
-                                        } else {
-                                          selectedAccounts.remove(accountName);
-                                        }
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                              ...dues.map((due) => Padding(
-                                    padding:
-                                        const EdgeInsets.only(left: 10, top: 5),
-                                    child: Text(
-                                      due.replaceAll("'", ""),
-                                      style: const TextStyle(
-                                          fontSize: 16, color: Colors.red),
-                                    ),
-                                  )),
-                              const Divider(),
-                              Text(
-                                "Total Due: ${totalDueAmount.toStringAsFixed(0)}",
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
                     },
                   ),
                 ),
@@ -503,77 +437,90 @@ class SelectedAccountsScreen extends StatelessWidget {
       return sum + amount;
     });
 
+    double width = MediaQuery.of(context).size.width;
+
+    int crossAxisCount;
+    if (width < 600) {
+      crossAxisCount = 1; // Mobile
+    } else if (width < 1024) {
+      crossAxisCount = 2; // Tablet
+    } else {
+      crossAxisCount = 3; // Laptop/Desktop
+    }
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      floatingActionButton: FloatingActionButton(
-        onPressed: generateAndSharePDF,
-        child: const Icon(Icons.picture_as_pdf_rounded),
-      ),
-      appBar: AppBar(
-          title: Text(
-        "Grand Total Due: ${grandTotalDue.toStringAsFixed(0)}",
-        style: const TextStyle(fontSize: 18),
-      )),
-      body: ListView.builder(
-        itemCount: groupedSelectedAccounts.keys.length,
-        itemBuilder: (context, index) {
-          String accountName = groupedSelectedAccounts.keys.elementAt(index);
-          List<Map<String, String>> dues =
-              groupedSelectedAccounts[accountName]!;
+        backgroundColor: Colors.white,
+        floatingActionButton: FloatingActionButton(
+          onPressed: generateAndSharePDF,
+          child: const Icon(Icons.picture_as_pdf_rounded),
+        ),
+        appBar: AppBar(
+            title: Text(
+          "Grand Total Due: ${grandTotalDue.toStringAsFixed(0)}",
+          style: const TextStyle(fontSize: 18),
+        )),
+        body: MasonryGridView.count(
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          padding: const EdgeInsets.all(10),
+          itemCount: groupedSelectedAccounts.keys.length,
+          itemBuilder: (context, index) {
+            String accountName = groupedSelectedAccounts.keys.elementAt(index);
+            List<Map<String, String>> dues =
+                groupedSelectedAccounts[accountName]!;
 
-          // Calculate total due for this account
-          double totalDueAmount = dues.fold(0.0, (sum, entry) {
-            double amount = double.tryParse(entry["Due Amount"] ?? "0") ?? 0.0;
-            return sum + amount;
-          });
+            double totalDueAmount = dues.fold(0.0, (sum, entry) {
+              double amount =
+                  double.tryParse(entry["Due Amount"] ?? "0") ?? 0.0;
+              return sum + amount;
+            });
 
-          return Card(
-            elevation: 0,
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10), // if you need this
-              side: BorderSide(
-                color: Colors.black.withOpacity(0.2),
-                width: 1,
+            return Card(
+              elevation: 0,
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: BorderSide(
+                  color: Colors.black.withOpacity(0.2),
+                  width: 1,
+                ),
               ),
-            ),
-            margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    accountName,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  ...dues.map((due) => Padding(
-                        padding: const EdgeInsets.only(left: 10, top: 5),
-                        child: Text(
-                          "${due["Date"].toString().replaceAll("'", "")} - ${due["Due Amount"]}",
-                          style:
-                              const TextStyle(fontSize: 16, color: Colors.red),
-                        ),
-                      )),
-                  const Divider(),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 10, top: 5),
-                    child: Text(
-                      "Total Due: ${totalDueAmount.toStringAsFixed(0)}",
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      accountName,
                       style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    ...dues.map((due) => Padding(
+                          padding: const EdgeInsets.only(left: 10, top: 5),
+                          child: Text(
+                            "${due["Date"]?.replaceAll("'", "") ?? ''} - ${due["Due Amount"]}",
+                            style: const TextStyle(
+                                fontSize: 16, color: Colors.red),
+                          ),
+                        )),
+                    const Divider(),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 10, top: 5),
+                      child: Text(
+                        "Total Due: ${totalDueAmount.toStringAsFixed(0)}",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        },
-      ),
-    );
+            );
+          },
+        ));
   }
 }

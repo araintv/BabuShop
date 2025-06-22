@@ -1,6 +1,4 @@
-import 'package:baboo_and_co/Screens/DuePayment.dart';
 import 'package:baboo_and_co/Screens/Options.dart';
-import 'package:baboo_and_co/Screens/khata.dart';
 import 'package:baboo_and_co/Services/GsheetApi.dart';
 import 'package:flutter/material.dart';
 
@@ -24,7 +22,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: OptionsScreen(),
+      home: const OptionsScreen(),
       // home: DuePaymentScreen(),
       // home: OptionsScreen(),
       // home: const HomePage(),

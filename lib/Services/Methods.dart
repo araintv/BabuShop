@@ -6,20 +6,23 @@ class Methods {
   showSlogan(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
 
-    return SizedBox(
-      height: 300,
-      width: width / 2.5,
-      child: Card(
-        semanticContainer: true,
-        clipBehavior: Clip.antiAliasWithSaveLayer,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        elevation: 50,
-        margin: const EdgeInsets.all(10),
-        child: Image.asset(
-          'assets/logo.jpeg',
-          fit: BoxFit.fill,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: SizedBox(
+        height: 250,
+        width: width / 1, //desktop 2.5 - mobile 1
+        child: Card(
+          semanticContainer: true,
+          clipBehavior: Clip.antiAliasWithSaveLayer,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+          elevation: 10,
+          margin: const EdgeInsets.all(10),
+          child: Image.asset(
+            'assets/logo.jpeg',
+            fit: BoxFit.fill,
+          ),
         ),
       ),
     );

@@ -15,6 +15,7 @@ Widget Button_Widget(
     ),
     child: Text(
       btnTitle,
+      textAlign: TextAlign.center,
       style: GoogleFonts.poppins(color: Colors.white),
     ),
   );

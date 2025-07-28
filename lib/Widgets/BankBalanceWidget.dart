@@ -24,9 +24,9 @@ class AccountBalanceGrid extends StatelessWidget {
           itemCount: accountBalances.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: MediaQuery.of(context).size.width < 600 ? 2 : 5,
-            childAspectRatio: 2.9,
-            crossAxisSpacing: 1,
-            mainAxisSpacing: 1,
+            childAspectRatio: 2, //Desktop 2.9 - mobile 2
+            crossAxisSpacing: 0.1, //Desktop 1 - mobile 0.1
+            mainAxisSpacing: 0.1, //Desktop 1 - mobile 0.1
           ),
           itemBuilder: (context, index) {
             String account = accountBalances.keys.elementAt(index);

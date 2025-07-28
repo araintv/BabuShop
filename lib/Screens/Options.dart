@@ -38,66 +38,69 @@ class _OptionsScreenState extends State<OptionsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(children: [
-          const SizedBox(height: 20),
-          AccountBalanceGrid(
-            accountBalances: accountBalances,
-            onRefresh: () {
-              setState(() {
-                fetchBalances();
-              });
-            },
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Methods().showSlogan(context),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      optionButton(context, 'Today Cash Book', () {
-                        Methods().navigateTo(context, const Todaycb());
-                      }),
-                      const SizedBox(width: 10),
-                      optionButton(context, 'General ledger', () {
-                        Methods().navigateTo(context, const DailyCashBook());
-                      }),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      optionButton(context, 'Gud Bill', () {
-                        Methods().navigateTo(context, const GudBillScreen());
-                      }),
-                      const SizedBox(width: 10),
-                      optionButton(context, 'Recent Gud Load', () {
-                        Methods()
-                            .navigateTo(context, const RecentRecordScreen());
-                      }),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      optionButton(context, 'Khata \'Accounts\'', () {
-                        Methods().navigateTo(context, const KhataScreen());
-                      }),
-                      const SizedBox(width: 10),
-                      optionButton(context, 'Due Payment', () {
-                        Methods().navigateTo(context, const DuePaymentScreen());
-                      }),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          )
-        ]),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(children: [
+            Methods().showSlogan(context),
+            SizedBox(height: 15),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.center,
+                    //   children: [
+                    //     optionButton(context, 'Today Cash Book', () {
+                    //       Methods().navigateTo(context, const Todaycb());
+                    //     }),
+                    //     const SizedBox(width: 10),
+                    //     optionButton(context, 'General ledger', () {
+                    //       Methods().navigateTo(context, const DailyCashBook());
+                    //     }),
+                    //   ],
+                    // ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        optionButton(context, 'Gud Bill', () {
+                          Methods().navigateTo(context, const GudBillScreen());
+                        }),
+                        const SizedBox(width: 10),
+                        optionButton(context, 'Recent Shipped', () {
+                          Methods()
+                              .navigateTo(context, const RecentRecordScreen());
+                        }),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        optionButton(context, 'Khata \'Accounts\'', () {
+                          Methods().navigateTo(context, const KhataScreen());
+                        }),
+                        const SizedBox(width: 10),
+                        optionButton(context, 'Due Payment', () {
+                          Methods()
+                              .navigateTo(context, const DuePaymentScreen());
+                        }),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            AccountBalanceGrid(
+              accountBalances: accountBalances,
+              onRefresh: () {
+                setState(() {
+                  fetchBalances();
+                });
+              },
+            ),
+          ]),
+        ),
       ),
     );
   }
@@ -108,7 +111,7 @@ class _OptionsScreenState extends State<OptionsScreen> {
       children: [
         SizedBox(
             height: 70,
-            width: width / 5,
+            width: width / 2.2, //desktop 5 - mobile
             child: Button_Widget(context, title, Colors.black, onClick)),
         const SizedBox(height: 10),
       ],

@@ -316,10 +316,10 @@ class _GudBillScreenState extends State<GudBillScreen> {
                                   horizontal: 6, vertical: 5),
                             ),
                             items: [
-                              "Lahori Corporation LQP",
                               "Talib Hussain LQP",
                               "Al Hilal Corporation",
-                              "Liaqat Amjad Yazman"
+                              "Liaqat Amjad Yazman",
+                              "No Choice"
                             ]
                                 .map((String item) => DropdownMenuItem<String>(
                                       value: item,

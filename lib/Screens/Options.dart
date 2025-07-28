@@ -1,6 +1,7 @@
 import 'package:baboo_and_co/Screens/DuePayment.dart';
 import 'package:baboo_and_co/Screens/GeneraLedger.dart';
 import 'package:baboo_and_co/Screens/GudBill.dart';
+import 'package:baboo_and_co/Screens/RecentRecord.dart';
 import 'package:baboo_and_co/Screens/TodayCB.dart';
 import 'package:baboo_and_co/Services/Methods.dart';
 import 'package:baboo_and_co/Widgets/BankBalanceWidget.dart';
@@ -72,6 +73,11 @@ class _OptionsScreenState extends State<OptionsScreen> {
                     children: [
                       optionButton(context, 'Gud Bill', () {
                         Methods().navigateTo(context, const GudBillScreen());
+                      }),
+                      const SizedBox(width: 10),
+                      optionButton(context, 'Recent Gud Load', () {
+                        Methods()
+                            .navigateTo(context, const RecentRecordScreen());
                       }),
                     ],
                   ),

@@ -10,7 +10,7 @@ class Methods {
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: SizedBox(
         height: 250,
-        width: width / 1, //desktop 2.5 - mobile 1
+        width: width / 2.5, //desktop 2.5 - mobile 1
         child: Card(
           semanticContainer: true,
           clipBehavior: Clip.antiAliasWithSaveLayer,
@@ -53,6 +53,7 @@ class Methods {
       "AlHabib Abu": 0.0,
       "Faisal Bank Ali": 0.0,
       "Islami Bank Ali": 0.0,
+      "Dukan Cash": 0.0,
     };
   }
 

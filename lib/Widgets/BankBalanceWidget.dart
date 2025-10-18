@@ -23,7 +23,7 @@ class AccountBalanceGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: accountBalances.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: MediaQuery.of(context).size.width < 600 ? 2 : 5,
+            crossAxisCount: MediaQuery.of(context).size.width < 600 ? 2 : 6,
             childAspectRatio: 2, //Desktop 2.9 - mobile 2
             crossAxisSpacing: 0.1, //Desktop 1 - mobile 0.1
             mainAxisSpacing: 0.1, //Desktop 1 - mobile 0.1

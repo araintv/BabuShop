@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:baboo_and_co/Services/GsheetApi.dart'; // Make sure this is correct
+import 'package:shop/Services/GsheetApi.dart';
 
 class RecentRecordScreen extends StatefulWidget {
   const RecentRecordScreen({super.key});
@@ -26,10 +26,12 @@ class _RecentRecordScreenState extends State<RecentRecordScreen> {
       final rows = allRows.sublist(1); // Skip header
 
       final filtered = rows
-          .where((row) =>
-              row.length >= 4 &&
-              row[2] == 'Good Bill' &&
-              row[3].toLowerCase() != 'rizwan rasheed')
+          .where(
+            (row) =>
+                row.length >= 4 &&
+                row[2] == 'Good Bill' &&
+                row[3].toLowerCase() != 'rizwan rasheed',
+          )
           .toList();
 
       // Group by date
@@ -44,7 +46,7 @@ class _RecentRecordScreenState extends State<RecentRecordScreen> {
         ..sort((a, b) => parseDate(b).compareTo(parseDate(a)));
 
       Map<String, List<List<String>>> sortedMap = {
-        for (var key in sortedKeys) key: grouped[key]!
+        for (var key in sortedKeys) key: grouped[key]!,
       };
 
       setState(() {
@@ -76,50 +78,53 @@ class _RecentRecordScreenState extends State<RecentRecordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Recent Good Bill Records'),
-          centerTitle: true,
-        ),
-        body: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : groupedData.isEmpty
-                ? const Center(child: Text('No Good Bill records found.'))
-                : ListView(
-                    padding: const EdgeInsets.all(10),
-                    children: groupedData.entries.map((entry) {
-                      String date = entry.key;
-                      List<List<String>> rows = entry.value;
+      appBar: AppBar(
+        title: const Text('Recent Good Bill Records'),
+        centerTitle: true,
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : groupedData.isEmpty
+          ? const Center(child: Text('No Good Bill records found.'))
+          : ListView(
+              padding: const EdgeInsets.all(10),
+              children: groupedData.entries.map((entry) {
+                String date = entry.key;
+                List<List<String>> rows = entry.value;
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '📅 $date',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red,
-                            ),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      date,
+                      style: const TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                    const Divider(thickness: 2),
+                    const SizedBox(height: 6),
+                    ...rows.map((row) {
+                      return ListTile(
+                        contentPadding: const EdgeInsets.only(left: 5),
+                        title: Text(
+                          '✔ ${row[3]}',
+                          style: const TextStyle(
+                            color: Colors.blueAccent,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const Divider(thickness: 2),
-                          const SizedBox(height: 6),
-                          ...rows.map((row) {
-                            return ListTile(
-                              contentPadding: const EdgeInsets.only(left: 5),
-                              title: Text(
-                                '✔ ${row[3]}',
-                                style: const TextStyle(
-                                    color: Colors.blueAccent,
-                                    fontWeight: FontWeight.w600),
-                              ), // Naam
-                              subtitle: Text(
-                                  "       Bags: ${row[4]}   |   Rs. ${row[5]}"),
-                            );
-                          }),
-                          const Divider(thickness: 2),
-                        ],
+                        ), // Naam
+                        subtitle: Text(
+                          "       Bags: ${row[4]}   |   Rs. ${row[5]}",
+                        ),
                       );
-                    }).toList(),
-                  ));
+                    }),
+                    const Divider(thickness: 2),
+                  ],
+                );
+              }).toList(),
+            ),
+    );
   }
 }

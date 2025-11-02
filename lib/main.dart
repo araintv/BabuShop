@@ -1,6 +1,6 @@
-import 'package:baboo_and_co/Screens/Options.dart';
-import 'package:baboo_and_co/Services/GsheetApi.dart';
 import 'package:flutter/material.dart';
+import 'package:shop/Screens/Options.dart';
+import 'package:shop/Services/GsheetApi.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

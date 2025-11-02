@@ -1,5 +1,3 @@
-import 'package:baboo_and_co/Services/GsheetApi.dart';
-import 'package:baboo_and_co/Widgets/Button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -7,7 +5,10 @@ import 'package:quickalert/models/quickalert_type.dart';
 import 'package:quickalert/widgets/quickalert_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:baboo_and_co/Components/snackBar.dart';
+
+import 'package:shop/Components/snackBar.dart';
+import 'package:shop/Services/GsheetApi.dart';
+import 'package:shop/Widgets/Button.dart';
 
 class Todaycb extends StatefulWidget {
   const Todaycb({super.key});
@@ -119,14 +120,18 @@ class _HomePageState extends State<Todaycb> {
         amountController.text.isEmpty) {
       // Show a custom SnackBar if any of the fields are empty
       CustomSnackBar(
-          context, const Text('All fields must be filled before saving!'));
+        context,
+        const Text('All fields must be filled before saving!'),
+      );
     } else if (!isValidDateFormat(dateController.text)) {
       CustomSnackBar(context, const Text('Date is not correctly formatted'));
     } else if (jamaController.text == naamController.text) {
       CustomSnackBar(
-          context,
-          const Text(
-              'The Naam \'Credit\' and Jaama \'Debit\' Should be Different')); //
+        context,
+        const Text(
+          'The Naam \'Credit\' and Jaama \'Debit\' Should be Different',
+        ),
+      ); //
     } else {
       setState(() {
         savedData.add({
@@ -138,7 +143,7 @@ class _HomePageState extends State<Todaycb> {
           'Amount': amountController.text,
           'Details': tafseelController.text.isNotEmpty
               ? tafseelController.text
-              : 'Without Details'
+              : 'Without Details',
         });
         _saveData(); // Save after adding new entry
         jamaController.clear();
@@ -157,8 +162,9 @@ class _HomePageState extends State<Todaycb> {
     amountController.text = savedData[index]['Amount'] ?? '';
     tafseelController.text = savedData[index]['Details'] ?? '';
 
-    TextEditingController dateController =
-        TextEditingController(text: savedData[index]['Date'] ?? '');
+    TextEditingController dateController = TextEditingController(
+      text: savedData[index]['Date'] ?? '',
+    );
 
     // Ensure selectedValue exists in the items list, otherwise set to null
     String? currentType = savedData[index]['Type'];
@@ -185,10 +191,12 @@ class _HomePageState extends State<Todaycb> {
                 value: selectedValue,
                 decoration: const InputDecoration(labelText: 'Type'),
                 items: items
-                    .map((String item) => DropdownMenuItem<String>(
-                          value: item,
-                          child: Text(item),
-                        ))
+                    .map(
+                      (String item) => DropdownMenuItem<String>(
+                        value: item,
+                        child: Text(item),
+                      ),
+                    )
                     .toList(),
                 onChanged: (String? value) {
                   setState(() {
@@ -291,222 +299,235 @@ class _HomePageState extends State<Todaycb> {
   Widget build(BuildContext context) {
     List<String> combinedSuggestions = (naamSuggestions + jamaSuggestions)
         .toSet() // Remove duplicates
-        .where((item) =>
-            item.isNotEmpty &&
-            item != "Naam" &&
-            item != "Jama" &&
-            item != "Type" &&
-            item != "")
+        .where(
+          (item) =>
+              item.isNotEmpty &&
+              item != "Naam" &&
+              item != "Jama" &&
+              item != "Type" &&
+              item != "",
+        )
         .toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daily Cash Book',
-            style: TextStyle(fontSize: 30, fontWeight: FontWeight.w500)),
+        title: const Text(
+          'Daily Cash Book',
+          style: TextStyle(fontWeight: FontWeight.w500),
+        ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 5),
+        child: Column(
+          children: [
+            Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: TextField(
-                          controller: dateController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              hintText: 'Date \'DD-MM-YYYY\''),
-                          style: const TextStyle(fontSize: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: dateController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'DD-MM-YYYY',
                         ),
                       ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        flex: 3,
-                        child: Autocomplete<String>(
-                          optionsBuilder: (TextEditingValue textEditingValue) {
-                            if (textEditingValue.text.isEmpty) {
-                              return const Iterable<String>.empty();
-                            }
-                            return combinedSuggestions.where((option) => option
-                                .toLowerCase()
-                                .contains(textEditingValue.text.toLowerCase()));
-                          },
-                          onSelected: (String selection) {
-                            jamaController.text = selection;
-                          },
-                          fieldViewBuilder: (context, textFieldController,
-                              focusNode, onEditingComplete) {
-                            textFieldController.text = jamaController.text;
-                            textFieldController.addListener(() {
-                              jamaController.text = textFieldController.text;
-                            });
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Autocomplete<String>(
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          return typeSuggestions.where(
+                            (option) => option.toLowerCase().contains(
+                              textEditingValue.text.toLowerCase(),
+                            ),
+                          );
+                        },
+                        onSelected: (String selection) {
+                          typeController.text = selection;
+                        },
+                        fieldViewBuilder:
+                            (
+                              context,
+                              textFieldController,
+                              focusNode,
+                              onEditingComplete,
+                            ) {
+                              textFieldController.text = typeController.text;
 
-                            return TextField(
-                              controller: textFieldController,
-                              focusNode: focusNode,
-                              onEditingComplete: onEditingComplete,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: 'Jama \'Credit\'',
-                              ),
-                              style: const TextStyle(fontSize: 20),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        flex: 2,
-                        child: Autocomplete<String>(
-                          optionsBuilder: (TextEditingValue textEditingValue) {
-                            return typeSuggestions.where((option) => option
-                                .toLowerCase()
-                                .contains(textEditingValue.text.toLowerCase()));
-                          },
-                          onSelected: (String selection) {
-                            typeController.text = selection;
-                          },
-                          fieldViewBuilder: (context, textFieldController,
-                              focusNode, onEditingComplete) {
-                            textFieldController.text = typeController.text;
+                              textFieldController.addListener(() {
+                                if (textFieldController.text !=
+                                    typeController.text) {
+                                  typeController.text =
+                                      textFieldController.text;
+                                }
+                              });
 
-                            textFieldController.addListener(() {
-                              if (textFieldController.text !=
-                                  typeController.text) {
-                                typeController.text = textFieldController.text;
-                              }
-                            });
-
-                            return TextField(
-                              controller:
-                                  textFieldController, // Use textFieldController here
-                              focusNode: focusNode,
-                              onEditingComplete: onEditingComplete,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: 'Online/Gud Bill/Cheeni Brokery',
-                              ),
-                              style: const TextStyle(fontSize: 20),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        flex: 3,
-                        child: Autocomplete<String>(
-                          optionsBuilder: (TextEditingValue textEditingValue) {
-                            if (textEditingValue.text.isEmpty) {
-                              return const Iterable<String>.empty();
-                            }
-                            return combinedSuggestions.where((option) => option
-                                .toLowerCase()
-                                .contains(textEditingValue.text.toLowerCase()));
-                          },
-                          onSelected: (String selection) {
-                            naamController.text = selection;
-                          },
-                          fieldViewBuilder: (context, textFieldController,
-                              focusNode, onEditingComplete) {
-                            textFieldController.text = naamController.text;
-                            textFieldController.addListener(() {
-                              naamController.text = textFieldController.text;
-                            });
-
-                            return TextField(
-                              controller: textFieldController,
-                              focusNode: focusNode,
-                              onEditingComplete: onEditingComplete,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: 'Naam \'Debit\'',
-                              ),
-                              style: const TextStyle(fontSize: 20),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      // Expanded(
-                      //   child: TextField(
-                      //     // controller: qntyController,
-                      //     decoration: const InputDecoration(
-                      //         border: OutlineInputBorder(), hintText: 'Quantity'),
-                      //     style: const TextStyle(fontSize: 20),
-                      //   ),
-                      // ),
-                      const SizedBox(
-                          width: 25,
-                          child: Center(
-                              child: Text('= ',
-                                  style: TextStyle(
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.bold)))),
-                      Expanded(
-                        flex: 2,
-                        child: TextField(
-                          controller: amountController,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter
-                                .digitsOnly, // Allow only numbers
-                            TextInputFormatter.withFunction(
-                                (oldValue, newValue) {
-                              String text = newValue.text
-                                  .replaceAll(',', ''); // Remove old commas
-                              if (text.isEmpty) return newValue;
-
-                              final formatter = NumberFormat.decimalPattern(
-                                  'en_IN'); // Indian format
-                              String formattedText =
-                                  formatter.format(int.parse(text));
-
-                              return TextEditingValue(
-                                text: formattedText,
-                                selection: TextSelection.collapsed(
-                                    offset: formattedText.length),
+                              return TextField(
+                                controller:
+                                    textFieldController, // Use textFieldController here
+                                focusNode: focusNode,
+                                onEditingComplete: onEditingComplete,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Type of Entry',
+                                ),
                               );
-                            }),
-                          ],
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            hintText: 'Rakam \'Amount\'',
-                          ),
-                          style: const TextStyle(fontSize: 20),
-                        ),
-                      )
-                    ],
-                  ),
+                            },
+                      ),
+                    ),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(
-                      left: 20, right: 20, top: 10, bottom: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          keyboardType: TextInputType.text,
-                          controller: tafseelController,
-                          decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              hintText: 'Tafseel \'Details\''),
-                          style: const TextStyle(fontSize: 20),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Autocomplete<String>(
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          if (textEditingValue.text.isEmpty) {
+                            return const Iterable<String>.empty();
+                          }
+                          return combinedSuggestions.where(
+                            (option) => option.toLowerCase().contains(
+                              textEditingValue.text.toLowerCase(),
+                            ),
+                          );
+                        },
+                        onSelected: (String selection) {
+                          jamaController.text = selection;
+                        },
+                        fieldViewBuilder:
+                            (
+                              context,
+                              textFieldController,
+                              focusNode,
+                              onEditingComplete,
+                            ) {
+                              textFieldController.text = jamaController.text;
+                              textFieldController.addListener(() {
+                                jamaController.text = textFieldController.text;
+                              });
+
+                              return TextField(
+                                controller: textFieldController,
+                                focusNode: focusNode,
+                                onEditingComplete: onEditingComplete,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Jama \'Credit\'',
+                                ),
+                              );
+                            },
+                      ),
+                    ),
+
+                    const SizedBox(width: 5),
+                    Expanded(
+                      flex: 3,
+                      child: Autocomplete<String>(
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          if (textEditingValue.text.isEmpty) {
+                            return const Iterable<String>.empty();
+                          }
+                          return combinedSuggestions.where(
+                            (option) => option.toLowerCase().contains(
+                              textEditingValue.text.toLowerCase(),
+                            ),
+                          );
+                        },
+                        onSelected: (String selection) {
+                          naamController.text = selection;
+                        },
+                        fieldViewBuilder:
+                            (
+                              context,
+                              textFieldController,
+                              focusNode,
+                              onEditingComplete,
+                            ) {
+                              textFieldController.text = naamController.text;
+                              textFieldController.addListener(() {
+                                naamController.text = textFieldController.text;
+                              });
+
+                              return TextField(
+                                controller: textFieldController,
+                                focusNode: focusNode,
+                                onEditingComplete: onEditingComplete,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Naam \'Debit\'',
+                                ),
+                              );
+                            },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: amountController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter
+                              .digitsOnly, // Allow only numbers
+                          TextInputFormatter.withFunction((oldValue, newValue) {
+                            String text = newValue.text.replaceAll(
+                              ',',
+                              '',
+                            ); // Remove old commas
+                            if (text.isEmpty) return newValue;
+
+                            final formatter = NumberFormat.decimalPattern(
+                              'en_IN',
+                            ); // Indian format
+                            String formattedText = formatter.format(
+                              int.parse(text),
+                            );
+
+                            return TextEditingValue(
+                              text: formattedText,
+                              selection: TextSelection.collapsed(
+                                offset: formattedText.length,
+                              ),
+                            );
+                          }),
+                        ],
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Rakam \'Amount\'',
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        width: 200,
-                        height: 50,
-                        child: Button_Widget(context, 'Clear List', Colors.red,
-                            () {
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: TextField(
+                        keyboardType: TextInputType.text,
+                        controller: tafseelController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Tafseel \'Details\'',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Divider(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Button_Widget(
+                        context,
+                        'Clear List',
+                        Colors.red,
+                        () {
                           QuickAlert.show(
                             context: context,
                             type: QuickAlertType.confirm,
@@ -523,14 +544,16 @@ class _HomePageState extends State<Todaycb> {
                             },
                             onCancelBtnTap: () => Navigator.pop(context),
                           );
-                        }),
+                        },
                       ),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        width: 200,
-                        height: 50,
-                        child: Button_Widget(
-                            context, 'Clear All Inputs', Colors.red, () {
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Button_Widget(
+                        context,
+                        'Clear All Inputs',
+                        Colors.red,
+                        () {
                           setState(() {
                             jamaController.clear();
                             naamController.clear();
@@ -538,29 +561,36 @@ class _HomePageState extends State<Todaycb> {
                             amountController.clear();
                             tafseelController.clear();
                           });
-                        }),
+                        },
                       ),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        width: 200,
-                        height: 50,
-                        child: Button_Widget(
-                            context, 'Save Now!', Colors.blue, saveData),
-                      ),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        width: 200,
-                        height: 50,
-                        child: uploadingProgress
-                            ? const Center(child: CircularProgressIndicator())
-                            : Button_Widget(
-                                context, 'Upload Now!', Colors.blue[900]!,
-                                () async {
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: uploadingProgress
+                          ? const Center(child: CircularProgressIndicator())
+                          : Button_Widget(
+                              context,
+                              'Upload Now!',
+                              Colors.blue[900]!,
+                              () async {
                                 if (savedData.isEmpty) {
-                                  CustomSnackBar(context,
-                                      const Text('No data to upload!'));
+                                  CustomSnackBar(
+                                    context,
+                                    const Text('No data to upload!'),
+                                  );
                                   return;
                                 }
+
+                                QuickAlert.show(
+                                  context: context,
+                                  type: QuickAlertType.loading,
+                                  title: 'Uploading...',
+                                  text: 'Please wait while data is uploaded',
+                                  barrierDismissible: false,
+                                );
 
                                 setState(() {
                                   uploadingProgress = true;
@@ -576,7 +606,7 @@ class _HomePageState extends State<Todaycb> {
                                     (entry['Amount'] ?? '')
                                         .toString()
                                         .replaceAll(',', ''),
-                                    entry['Details'] ?? ''
+                                    entry['Details'] ?? '',
                                   ]);
                                 }
 
@@ -585,100 +615,216 @@ class _HomePageState extends State<Todaycb> {
                                   savedData.clear();
                                 });
 
-                                CustomSnackBar(context,
-                                    const Text('Data uploaded successfully!'));
-                              }),
+                                Navigator.pop(context);
+
+                                CustomSnackBar(
+                                  context,
+                                  const Text('Data uploaded successfully!'),
+                                );
+                              },
+                            ),
+                    ),
+                    const SizedBox(width: 5),
+
+                    Expanded(
+                      child: Button_Widget(
+                        context,
+                        'Save Now!',
+                        Colors.blue,
+                        saveData,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ),
-          const Padding(
-            padding: EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [],
-            ),
-          ),
-          savedData.isNotEmpty
-              ? Expanded(
-                  child: ListView(
-                    children: [
-                      DataTable(
-                        columns: const [
-                          DataColumn(
-                              label:
-                                  Text('No.', style: TextStyle(fontSize: 25))),
-                          DataColumn(
-                              label:
-                                  Text('Date', style: TextStyle(fontSize: 25))),
-                          DataColumn(
-                              label:
-                                  Text('Jama', style: TextStyle(fontSize: 25))),
-                          DataColumn(
-                              label:
-                                  Text('Type', style: TextStyle(fontSize: 25))),
-                          DataColumn(
-                              label:
-                                  Text('Naam', style: TextStyle(fontSize: 25))),
-                          // DataColumn(
-                          //     label: Text('Quantity',
-                          //         style: TextStyle(fontSize: 25))),
-                          DataColumn(
-                              label: Text('Amount',
-                                  style: TextStyle(fontSize: 25))),
-                          DataColumn(
-                              label: Text('Details',
-                                  style: TextStyle(fontSize: 25))),
-                          DataColumn(
-                              label:
-                                  Text('Edit', style: TextStyle(fontSize: 25))),
-                          DataColumn(
-                              label: Text('Delete',
-                                  style: TextStyle(fontSize: 25))),
-                        ],
-                        rows: savedData.reversed
-                            .toList()
-                            .asMap()
-                            .entries
-                            .map((entry) {
-                          int reversedIndex =
-                              savedData.length - 1 - entry.key; // Reverse index
-                          Map<String, String> data = entry.value;
+            Divider(),
+            savedData.isNotEmpty
+                ? Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        double tableWidth = constraints.maxWidth;
 
-                          return DataRow(cells: [
-                            DataCell(Text((reversedIndex + 1)
-                                .toString())), // Display correct index
-                            DataCell(Text(data['Date'] ?? '')),
-                            DataCell(Text(data['Jama'] ?? '')),
-                            DataCell(Text(data['Type'] ?? '')),
-                            DataCell(Text(data['Naam'] ?? '')),
-                            // DataCell(Text(data['Quantity'] ?? '')),
-                            DataCell(Text(data['Amount'] ?? '')),
-                            DataCell(Text(data['Details'] ?? '')),
-                            DataCell(InkWell(
-                                onTap: () => editEntry(
-                                    reversedIndex), // Pass correct index
-                                child: const Icon(Icons.edit,
-                                    color: Colors.blue))),
-                            DataCell(InkWell(
-                                onTap: () => deleteEntry(
-                                    reversedIndex), // Pass correct index
-                                child: const Icon(Icons.delete,
-                                    color: Colors.red))),
-                          ]);
-                        }).toList(),
-                      ),
-                    ],
+                        // Adjust column widths according to your layout
+                        double dateCol = tableWidth * 0.15;
+                        double jamaCol = tableWidth * 0.15;
+                        double typeCol = tableWidth * 0.15;
+                        double naamCol = tableWidth * 0.15;
+                        double amountCol = tableWidth * 0.15;
+                        double iconCol =
+                            tableWidth * 0.075; // ✅ make visible and tappable
+
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: tableWidth,
+                            child: DataTable(
+                              columnSpacing: 4,
+                              horizontalMargin: 4,
+                              headingRowHeight: 25,
+                              dataRowMinHeight: 20,
+                              dataRowMaxHeight: 25,
+                              columns: const [
+                                DataColumn(
+                                  label: Text(
+                                    'Date',
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    'Jama',
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    'Type',
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    'Naam',
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    'Amount',
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    'Edit',
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    'Delete',
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                              ],
+                              rows: savedData.reversed
+                                  .toList()
+                                  .asMap()
+                                  .entries
+                                  .map((entry) {
+                                    int reversedIndex =
+                                        savedData.length - 1 - entry.key;
+                                    Map<String, String> data = entry.value;
+
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(
+                                          SizedBox(
+                                            width: dateCol,
+                                            child: Text(
+                                              data['Date'] ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 8,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          SizedBox(
+                                            width: jamaCol,
+                                            child: Text(
+                                              data['Jama'] ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 8,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          SizedBox(
+                                            width: typeCol,
+                                            child: Text(
+                                              data['Type'] ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 8,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          SizedBox(
+                                            width: naamCol,
+                                            child: Text(
+                                              data['Naam'] ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 8,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          SizedBox(
+                                            width: amountCol,
+                                            child: Text(
+                                              data['Amount'] ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 8,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+
+                                        // ✅ Edit button
+                                        DataCell(
+                                          SizedBox(
+                                            width: iconCol,
+                                            child: Center(
+                                              child: InkWell(
+                                                onTap: () =>
+                                                    editEntry(reversedIndex),
+                                                child: const Icon(
+                                                  Icons.edit,
+                                                  color: Colors.blue,
+                                                  size: 18,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        // ✅ Delete button
+                                        DataCell(
+                                          SizedBox(
+                                            width: iconCol,
+                                            child: Center(
+                                              child: InkWell(
+                                                onTap: () =>
+                                                    deleteEntry(reversedIndex),
+                                                child: const Icon(
+                                                  Icons.delete,
+                                                  color: Colors.red,
+                                                  size: 18,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  })
+                                  .toList(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                : const Padding(
+                    padding: EdgeInsets.only(top: 10),
+                    child: Text('No Entry was Recorded Today'),
                   ),
-                )
-              : const Text(
-                  'No Entry was Recorded Today',
-                  style: TextStyle(fontSize: 20),
-                ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,6 @@
 {
-    "name": "baboo_and_co",
-    "short_name": "baboo_and_co",
+    "name": "shop",
+    "short_name": "shop",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -1,6 +1,3 @@
-import 'package:baboo_and_co/Components/snackBar.dart';
-import 'package:baboo_and_co/Services/GsheetApi.dart';
-import 'package:baboo_and_co/Widgets/DuePaymentWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +6,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shop/Components/snackBar.dart';
+import 'package:shop/Services/GsheetApi.dart';
+import 'package:shop/Widgets/DuePaymentWidget.dart';
 
 class DuePaymentScreen extends StatefulWidget {
   const DuePaymentScreen({super.key});
@@ -52,24 +52,66 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
       String date = row.isNotEmpty ? row[0].trim() : "Unknown Date";
       String? jamaName = row.length > 1 ? row[1].trim() : null;
       String? naamName = row.length > 3 ? row[3].trim() : null;
-      double amount =
-          row.length > 5 ? (double.tryParse(row[5].trim()) ?? 0.0) : 0.0;
+      double amount = row.length > 5
+          ? (double.tryParse(row[5].trim()) ?? 0.0)
+          : 0.0;
 
       if (naamName != null && naamName.isNotEmpty) {
         accountDetails.putIfAbsent(naamName, () => []);
-        accountDetails[naamName]!
-            .add({"type": "due", "date": date, "amount": amount});
+        accountDetails[naamName]!.add({
+          "type": "due",
+          "date": date,
+          "amount": amount,
+        });
       }
       if (jamaName != null && jamaName.isNotEmpty) {
         accountDetails.putIfAbsent(jamaName, () => []);
-        accountDetails[jamaName]!
-            .add({"type": "paid", "date": date, "amount": amount});
+        accountDetails[jamaName]!.add({
+          "type": "paid",
+          "date": date,
+          "amount": amount,
+        });
       }
     }
 
     Map<String, List<Map<String, dynamic>>> partialsMap = {};
 
     accountDetails.forEach((account, transactions) {
+      final ignoreList = [
+        "Khata",
+        "Bank",
+        "AlHabib Babu",
+        "Meezan Babu",
+        "UBL Babu",
+        "HBL Babu",
+        "Allied Babu",
+        "MCB Ali",
+        "AlHabib Ali",
+        "Meezan Ali",
+        "UBL Ali",
+        "Allied Ali",
+        "Faisal Bank Ali",
+        "Islami Bank Ali",
+        "AlHabib Abu",
+        "Meezan Abu",
+        "UBL Abu",
+        "Good Stock Khata AlHilal",
+        "Good Stock Khata Yazman",
+        "Quetta Stock Khata",
+        "Chistya Sanetary Hyderabad",
+        "Ghar Kharch 3 Star",
+        "Ghar Kharch 4 Star",
+        "Dukan Kharch",
+        "Dukan Cash",
+        "Mariam",
+      ];
+
+      // If account name matches or contains "Khata" or "Bank" or is in the ignore list → skip it
+      if (ignoreList.contains(account.trim()) ||
+          account.toLowerCase().contains("khata") ||
+          account.toLowerCase().contains("bank")) {
+        return; // Skip this account
+      }
       double totalDue = 0.0;
 
       List<Map<String, dynamic>> dues = [];
@@ -96,7 +138,8 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
           DateTime parsedDateA = dateFormat.parse(dateA);
           DateTime parsedDateB = dateFormat.parse(dateB);
           return parsedDateA.compareTo(
-              parsedDateB); // Compare by full date (day, month, year)
+            parsedDateB,
+          ); // Compare by full date (day, month, year)
         } catch (e) {
           return 0; // Return 0 if there is an error parsing the date (it won't affect sorting)
         }
@@ -113,7 +156,8 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
           DateTime parsedDateA = dateFormat.parse(dateA);
           DateTime parsedDateB = dateFormat.parse(dateB);
           return parsedDateA.compareTo(
-              parsedDateB); // Compare by full date (day, month, year)
+            parsedDateB,
+          ); // Compare by full date (day, month, year)
         } catch (e) {
           return 0; // Return 0 if there is an error parsing the date (it won't affect sorting)
         }
@@ -136,8 +180,9 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
       }
 
       // Get unpaid dues and apply the reverse partial logic
-      List<Map<String, dynamic>> unpaidDues =
-          dues.where((d) => d["amount"] > 0).toList();
+      List<Map<String, dynamic>> unpaidDues = dues
+          .where((d) => d["amount"] > 0)
+          .toList();
 
       unpaidDues.sort((a, b) {
         String dateA = a["date"];
@@ -149,8 +194,9 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
         try {
           DateTime parsedDateA = dateFormat.parse(dateA);
           DateTime parsedDateB = dateFormat.parse(dateB);
-          return parsedDateB
-              .compareTo(parsedDateA); // Sort from newest to oldest
+          return parsedDateB.compareTo(
+            parsedDateA,
+          ); // Sort from newest to oldest
         } catch (e) {
           return 0; // Return 0 if there is an error parsing the date (it won't affect sorting)
         }
@@ -240,14 +286,17 @@ class _DuePaymentScreenState extends State<DuePaymentScreen> {
                 builder: (context) => SelectedAccountsScreen(
                   selectedAccounts: allData
                       .where(
-                          (entry) => selectedAccounts.contains(entry["Name"]))
+                        (entry) => selectedAccounts.contains(entry["Name"]),
+                      )
                       .toList(),
                 ),
               ),
             );
           } else {
             CustomSnackBar(
-                context, const Text("Please Select at Least One Account"));
+              context,
+              const Text("Please Select at Least One Account"),
+            );
           }
         },
         child: const Icon(Icons.check),
@@ -320,9 +369,10 @@ class SelectedAccountsScreen extends StatelessWidget {
         margin: const pw.EdgeInsets.all(20),
         build: (pw.Context context) {
           return [
-            pw.Text(DateFormat('dd-MM-yyyy').format(DateTime.now()),
-                style:
-                    pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+              DateFormat('dd-MM-yyyy').format(DateTime.now()),
+              style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+            ),
             pw.SizedBox(height: 10),
 
             // Generate account dues list
@@ -339,9 +389,13 @@ class SelectedAccountsScreen extends StatelessWidget {
               return pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text(accountName,
-                      style: pw.TextStyle(
-                          fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                  pw.Text(
+                    accountName,
+                    style: pw.TextStyle(
+                      fontSize: 18,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
                   pw.SizedBox(height: 5),
                   pw.Table(
                     border: pw.TableBorder.all(),
@@ -351,22 +405,29 @@ class SelectedAccountsScreen extends StatelessWidget {
                     },
                     children: [
                       pw.TableRow(
-                        decoration:
-                            const pw.BoxDecoration(color: PdfColors.grey300),
+                        decoration: const pw.BoxDecoration(
+                          color: PdfColors.grey300,
+                        ),
                         children: [
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(5),
-                            child: pw.Text("Date",
-                                style: pw.TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: pw.FontWeight.bold)),
+                            child: pw.Text(
+                              "Date",
+                              style: pw.TextStyle(
+                                fontSize: 14,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
                           ),
                           pw.Padding(
                             padding: const pw.EdgeInsets.all(5),
-                            child: pw.Text("Due Amount",
-                                style: pw.TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: pw.FontWeight.bold)),
+                            child: pw.Text(
+                              "Due Amount",
+                              style: pw.TextStyle(
+                                fontSize: 14,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -376,13 +437,16 @@ class SelectedAccountsScreen extends StatelessWidget {
                             pw.Padding(
                               padding: const pw.EdgeInsets.all(5),
                               child: pw.Text(
-                                  (due["Date"] ?? "--").replaceAll("'", ""),
-                                  style: const pw.TextStyle(fontSize: 12)),
+                                (due["Date"] ?? "--").replaceAll("'", ""),
+                                style: const pw.TextStyle(fontSize: 12),
+                              ),
                             ),
                             pw.Padding(
                               padding: const pw.EdgeInsets.all(5),
-                              child: pw.Text(due["Due Amount"] ?? "0",
-                                  style: const pw.TextStyle(fontSize: 12)),
+                              child: pw.Text(
+                                due["Due Amount"] ?? "0",
+                                style: const pw.TextStyle(fontSize: 12),
+                              ),
                             ),
                           ],
                         ),
@@ -390,20 +454,27 @@ class SelectedAccountsScreen extends StatelessWidget {
                     ],
                   ),
                   pw.SizedBox(height: 5),
-                  pw.Text("Total Due: ${totalDueAmount.toStringAsFixed(0)}",
-                      style: pw.TextStyle(
-                          fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                  pw.Text(
+                    "Total Due: ${totalDueAmount.toStringAsFixed(0)}",
+                    style: pw.TextStyle(
+                      fontSize: 16,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
                   pw.Divider(),
                   pw.SizedBox(height: 10),
                 ],
               );
             }).toList(),
 
-            pw.Text("Grand Total Due: ${grandTotalDue.toStringAsFixed(0)}",
-                style: pw.TextStyle(
-                    fontSize: 18,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.green)),
+            pw.Text(
+              "Grand Total Due: ${grandTotalDue.toStringAsFixed(0)}",
+              style: pw.TextStyle(
+                fontSize: 18,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.green,
+              ),
+            ),
           ];
         },
       ),
@@ -412,12 +483,14 @@ class SelectedAccountsScreen extends StatelessWidget {
     // Save PDF file
     final output = await getTemporaryDirectory();
     final file = File(
-        "${output.path}/${DateTime.now().day}-${DateTime.now().month}-${DateTime.now().year}.pdf");
+      "${output.path}/${DateTime.now().day}-${DateTime.now().month}-${DateTime.now().year}.pdf",
+    );
     await file.writeAsBytes(await pdf.save());
 
     // Share PDF
-    Share.shareXFiles([XFile(file.path)],
-        text: "Here is the Selected Accounts Report.");
+    Share.shareXFiles([
+      XFile(file.path),
+    ], text: "Here is the Selected Accounts Report.");
   }
 
   @override
@@ -449,78 +522,79 @@ class SelectedAccountsScreen extends StatelessWidget {
     }
 
     return Scaffold(
-        backgroundColor: Colors.white,
-        floatingActionButton: FloatingActionButton(
-          onPressed: generateAndSharePDF,
-          child: const Icon(Icons.picture_as_pdf_rounded),
-        ),
-        appBar: AppBar(
-            title: Text(
+      backgroundColor: Colors.white,
+      floatingActionButton: FloatingActionButton(
+        onPressed: generateAndSharePDF,
+        child: const Icon(Icons.picture_as_pdf_rounded),
+      ),
+      appBar: AppBar(
+        title: Text(
           "Grand Total Due: ${grandTotalDue.toStringAsFixed(0)}",
           style: const TextStyle(fontSize: 18),
-        )),
-        body: MasonryGridView.count(
-          crossAxisCount: crossAxisCount,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          padding: const EdgeInsets.all(10),
-          itemCount: groupedSelectedAccounts.keys.length,
-          itemBuilder: (context, index) {
-            String accountName = groupedSelectedAccounts.keys.elementAt(index);
-            List<Map<String, String>> dues =
-                groupedSelectedAccounts[accountName]!;
+        ),
+      ),
+      body: MasonryGridView.count(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        padding: const EdgeInsets.all(10),
+        itemCount: groupedSelectedAccounts.keys.length,
+        itemBuilder: (context, index) {
+          String accountName = groupedSelectedAccounts.keys.elementAt(index);
+          List<Map<String, String>> dues =
+              groupedSelectedAccounts[accountName]!;
 
-            double totalDueAmount = dues.fold(0.0, (sum, entry) {
-              double amount =
-                  double.tryParse(entry["Due Amount"] ?? "0") ?? 0.0;
-              return sum + amount;
-            });
+          double totalDueAmount = dues.fold(0.0, (sum, entry) {
+            double amount = double.tryParse(entry["Due Amount"] ?? "0") ?? 0.0;
+            return sum + amount;
+          });
 
-            return Card(
-              elevation: 0,
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: BorderSide(
-                  color: Colors.black.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      accountName,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
+          return Card(
+            elevation: 0,
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: Colors.black.withOpacity(0.2), width: 1),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    accountName,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    ...dues.map((due) => Padding(
-                          padding: const EdgeInsets.only(left: 10, top: 5),
-                          child: Text(
-                            "${due["Date"]?.replaceAll("'", "") ?? ''} - ${due["Due Amount"]}",
-                            style: const TextStyle(
-                                fontSize: 16, color: Colors.red),
-                          ),
-                        )),
-                    const Divider(),
-                    Padding(
+                  ),
+                  ...dues.map(
+                    (due) => Padding(
                       padding: const EdgeInsets.only(left: 10, top: 5),
                       child: Text(
-                        "Total Due: ${totalDueAmount.toStringAsFixed(0)}",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
+                        "${due["Date"]?.replaceAll("'", "") ?? ''} - ${due["Due Amount"]}",
+                        style: const TextStyle(fontSize: 16, color: Colors.red),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const Divider(),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10, top: 5),
+                    child: Text(
+                      "Total Due: ${totalDueAmount.toStringAsFixed(0)}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-        ));
+            ),
+          );
+        },
+      ),
+    );
   }
 }

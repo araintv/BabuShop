@@ -1,12 +1,12 @@
-import 'package:baboo_and_co/Components/snackBar.dart';
-import 'package:baboo_and_co/Services/GsheetApi.dart';
-import 'package:baboo_and_co/Widgets/Button.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:quickalert/models/quickalert_type.dart';
 import 'package:quickalert/widgets/quickalert_dialog.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shop/Components/snackBar.dart';
+import 'package:shop/Services/GsheetApi.dart';
+import 'package:shop/Widgets/Button.dart';
 
 class GudBillScreen extends StatefulWidget {
   const GudBillScreen({super.key});
@@ -70,8 +70,8 @@ class _GudBillScreenState extends State<GudBillScreen> {
             'description': TextEditingController(),
             'rate': TextEditingController(),
             'total': TextEditingController(),
-          }
-        ]
+          },
+        ],
       });
     });
   }
@@ -111,20 +111,26 @@ class _GudBillScreenState extends State<GudBillScreen> {
   }
 
   void calculateTotal(int partyIndex, int itemIndex) {
-    double bags = double.tryParse(
-            partyList[partyIndex]['items'][itemIndex]['bags']!.text) ??
+    double bags =
+        double.tryParse(
+          partyList[partyIndex]['items'][itemIndex]['bags']!.text,
+        ) ??
         0;
-    double kg = double.tryParse(
-            partyList[partyIndex]['items'][itemIndex]['kg']!.text) ??
+    double kg =
+        double.tryParse(
+          partyList[partyIndex]['items'][itemIndex]['kg']!.text,
+        ) ??
         0;
-    double rate = double.tryParse(
-            partyList[partyIndex]['items'][itemIndex]['rate']!.text) ??
+    double rate =
+        double.tryParse(
+          partyList[partyIndex]['items'][itemIndex]['rate']!.text,
+        ) ??
         0;
     double total = (bags * kg) / 40 * rate;
 
     setState(() {
-      partyList[partyIndex]['items'][itemIndex]['total']!.text =
-          total.toStringAsFixed(2);
+      partyList[partyIndex]['items'][itemIndex]['total']!.text = total
+          .toStringAsFixed(2);
     });
   }
 
@@ -138,7 +144,9 @@ class _GudBillScreenState extends State<GudBillScreen> {
         truckNumber.text.isEmpty ||
         partyList.isEmpty) {
       CustomSnackBar(
-          context, const Text('All fields must be filled before saving!'));
+        context,
+        const Text('All fields must be filled before saving!'),
+      );
       return;
     }
 
@@ -164,7 +172,7 @@ class _GudBillScreenState extends State<GudBillScreen> {
       "Rizwan Rasheed", // Naam
       totalQuantity.toString(), // Quantity (Total Sum)
       totalAmount.toString(), // Amount (Total Sum)
-      "Total Weight : ${totalKG.text}, Gud Bill Number : ${goodBillNumber.text}, Driver Number : ${driverNumber.text}, Truck Number : ${truckNumber.text}" // Details
+      "Total Weight : ${totalKG.text}, Gud Bill Number : ${goodBillNumber.text}, Driver Number : ${driverNumber.text}, Truck Number : ${truckNumber.text}", // Details
     ];
 
     await UserSheetsApi.insertRow(firstEntry); // Upload first entry
@@ -191,8 +199,9 @@ class _GudBillScreenState extends State<GudBillScreen> {
         }
       }
 
-      String tafseelDetails =
-          tafseelList.isNotEmpty ? tafseelList.join(", ") : "No Tafseel";
+      String tafseelDetails = tafseelList.isNotEmpty
+          ? tafseelList.join(", ")
+          : "No Tafseel";
 
       List<String> partyEntry = [
         dateController.text.replaceAll("'", ""), // Date (Same)
@@ -201,7 +210,7 @@ class _GudBillScreenState extends State<GudBillScreen> {
         partyName, // Naam (Party Name)
         partyQuantity.toString(), // Quantity (Original sum of bags)
         partyAmount.toString(), // Amount (Party Sum)
-        "Total Bags: ${partyQuantity.toString()} Total Weight: ${multipliedWeight.toString()}, Gud Bill Number: ${goodBillNumber.text}, Tafseel: $tafseelDetails" // Tafseel added
+        "Total Bags: ${partyQuantity.toString()} Total Weight: ${multipliedWeight.toString()}, Gud Bill Number: ${goodBillNumber.text}, Tafseel: $tafseelDetails", // Tafseel added
       ];
 
       await UserSheetsApi.insertRow(partyEntry); // Upload Party Entry
@@ -210,9 +219,12 @@ class _GudBillScreenState extends State<GudBillScreen> {
     // Clear input fields after saving
 
     CustomSnackBar(
-        context, const Text('Data successfully saved to Google Sheets!'));
+      context,
+      const Text('Data successfully saved to Google Sheets!'),
+    );
     await Share.share(
-        'Date : ${dateController.text}, \nDriver Phone Number : ${driverNumber.text}, \nTruck Number : ${truckNumber.text} \nBaboo and Company, Galla Mandi, Liaqatpur');
+      'Date : ${dateController.text}, \nDriver Phone Number : ${driverNumber.text}, \nTruck Number : ${truckNumber.text} \nBaboo and Company, Galla Mandi, Liaqatpur',
+    );
 
     setState(() {
       purchasedParty.clear();
@@ -259,12 +271,9 @@ class _GudBillScreenState extends State<GudBillScreen> {
                         );
                       }
                     },
-                    child: const Icon(
-                      Icons.file_upload_outlined,
-                      size: 35,
-                    ),
+                    child: const Icon(Icons.file_upload_outlined, size: 35),
                   ),
-          )
+          ),
         ],
       ),
       body: Padding(
@@ -289,8 +298,9 @@ class _GudBillScreenState extends State<GudBillScreen> {
                                   label: Text(
                                     'Date',
                                     style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: screenWidth * 0.030),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: screenWidth * 0.030,
+                                    ),
                                   ),
                                   border: const OutlineInputBorder(),
                                   suffixIcon: IconButton(
@@ -313,19 +323,24 @@ class _GudBillScreenState extends State<GudBillScreen> {
                               labelText: 'Purchased From',
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 5),
+                                horizontal: 6,
+                                vertical: 5,
+                              ),
                             ),
-                            items: [
-                              "Talib Hussain LQP",
-                              "Al Hilal Corporation",
-                              "Liaqat Amjad Yazman",
-                              "No Choice"
-                            ]
-                                .map((String item) => DropdownMenuItem<String>(
-                                      value: item,
-                                      child: Text(item),
-                                    ))
-                                .toList(),
+                            items:
+                                [
+                                      "Talib Hussain LQP",
+                                      "Al Hilal Corporation",
+                                      "Liaqat Amjad Yazman",
+                                      "No Choice",
+                                    ]
+                                    .map(
+                                      (String item) => DropdownMenuItem<String>(
+                                        value: item,
+                                        child: Text(item),
+                                      ),
+                                    )
+                                    .toList(),
                             onChanged: (String? newValue) {
                               if (newValue != null) {
                                 setState(() {
@@ -349,8 +364,9 @@ class _GudBillScreenState extends State<GudBillScreen> {
                               label: Text(
                                 'Total Weight KG',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: screenWidth * 0.030),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: screenWidth * 0.030,
+                                ),
                               ),
                               border: const OutlineInputBorder(),
                             ),
@@ -366,8 +382,9 @@ class _GudBillScreenState extends State<GudBillScreen> {
                               label: Text(
                                 'Gud Bill',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: screenWidth * 0.030),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: screenWidth * 0.030,
+                                ),
                               ),
                               border: const OutlineInputBorder(),
                             ),
@@ -380,13 +397,15 @@ class _GudBillScreenState extends State<GudBillScreen> {
                             controller: totalRaqam,
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                                label: Text(
-                                  'Total Raqam',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: screenWidth * 0.030),
+                              label: Text(
+                                'Total Raqam',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: screenWidth * 0.030,
                                 ),
-                                border: const OutlineInputBorder()),
+                              ),
+                              border: const OutlineInputBorder(),
+                            ),
                           ),
                         ),
                       ],
@@ -403,8 +422,9 @@ class _GudBillScreenState extends State<GudBillScreen> {
                               label: Text(
                                 'Truck No',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: screenWidth * 0.030),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: screenWidth * 0.030,
+                                ),
                               ),
                               border: const OutlineInputBorder(),
                             ),
@@ -420,8 +440,9 @@ class _GudBillScreenState extends State<GudBillScreen> {
                               label: Text(
                                 'Driver Number',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: screenWidth * 0.030),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: screenWidth * 0.030,
+                                ),
                               ),
                               border: const OutlineInputBorder(),
                             ),
@@ -429,9 +450,7 @@ class _GudBillScreenState extends State<GudBillScreen> {
                         ),
                       ],
                     ),
-                    const Divider(
-                      thickness: 2,
-                    ),
+                    const Divider(thickness: 2),
                     const SizedBox(height: 10),
                     ListView.builder(
                       shrinkWrap: true,
@@ -445,7 +464,9 @@ class _GudBillScreenState extends State<GudBillScreen> {
                               child: Text(
                                 '${partyIndex + 1}',
                                 style: const TextStyle(
-                                    fontSize: 28, fontWeight: FontWeight.w600),
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                             SizedBox(
@@ -453,74 +474,87 @@ class _GudBillScreenState extends State<GudBillScreen> {
                               child: Autocomplete<String>(
                                 optionsBuilder:
                                     (TextEditingValue textEditingValue) {
-                                  if (textEditingValue.text.isEmpty) {
-                                    return const Iterable<String>.empty();
-                                  }
-                                  List<String> combinedSuggestions =
-                                      (jamaSuggestions + naamSuggestions)
-                                          .toSet()
-                                          .toList();
-                                  return combinedSuggestions.where(
-                                    (option) => option.toLowerCase().contains(
-                                        textEditingValue.text.toLowerCase()),
-                                  );
-                                },
+                                      if (textEditingValue.text.isEmpty) {
+                                        return const Iterable<String>.empty();
+                                      }
+                                      List<String> combinedSuggestions =
+                                          (jamaSuggestions + naamSuggestions)
+                                              .toSet()
+                                              .toList();
+                                      return combinedSuggestions.where(
+                                        (option) =>
+                                            option.toLowerCase().contains(
+                                              textEditingValue.text
+                                                  .toLowerCase(),
+                                            ),
+                                      );
+                                    },
                                 onSelected: (String selection) {
                                   setState(() {
                                     partyList[partyIndex]['partyName'].text =
                                         selection;
                                   });
                                 },
-                                fieldViewBuilder: (context, textFieldController,
-                                    focusNode, onEditingComplete) {
-                                  // Assign the initial value only once
-                                  if (textFieldController.text.isEmpty) {
-                                    textFieldController.text =
-                                        partyList[partyIndex]['partyName'].text;
-                                  }
+                                fieldViewBuilder:
+                                    (
+                                      context,
+                                      textFieldController,
+                                      focusNode,
+                                      onEditingComplete,
+                                    ) {
+                                      // Assign the initial value only once
+                                      if (textFieldController.text.isEmpty) {
+                                        textFieldController.text =
+                                            partyList[partyIndex]['partyName']
+                                                .text;
+                                      }
 
-                                  textFieldController.addListener(() {
-                                    // Avoid calling `setState()` unnecessarily
-                                    if (partyList[partyIndex]['partyName']
-                                            .text !=
-                                        textFieldController.text) {
-                                      partyList[partyIndex]['partyName'].text =
-                                          textFieldController.text;
-                                    }
-                                  });
+                                      textFieldController.addListener(() {
+                                        // Avoid calling `setState()` unnecessarily
+                                        if (partyList[partyIndex]['partyName']
+                                                .text !=
+                                            textFieldController.text) {
+                                          partyList[partyIndex]['partyName']
+                                                  .text =
+                                              textFieldController.text;
+                                        }
+                                      });
 
-                                  return TextField(
-                                    controller: textFieldController,
-                                    focusNode: focusNode,
-                                    onEditingComplete: onEditingComplete,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Party Name',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  );
-                                },
+                                      return TextField(
+                                        controller: textFieldController,
+                                        focusNode: focusNode,
+                                        onEditingComplete: onEditingComplete,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Party Name',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      );
+                                    },
                               ),
                             ),
                             const SizedBox(height: 5),
                             ListView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: partyList[partyIndex]['items'].length +
+                              itemCount:
+                                  partyList[partyIndex]['items'].length +
                                   1, // Extra item for total weight
                               itemBuilder: (context, itemIndex) {
                                 if (itemIndex <
                                     partyList[partyIndex]['items'].length) {
-                                  double quantity = double.tryParse(
-                                          partyList[partyIndex]['items']
-                                                      [itemIndex]['bags']
-                                                  ?.text ??
-                                              '0') ??
+                                  double quantity =
+                                      double.tryParse(
+                                        partyList[partyIndex]['items'][itemIndex]['bags']
+                                                ?.text ??
+                                            '0',
+                                      ) ??
                                       0;
-                                  double kg = double.tryParse(
-                                          partyList[partyIndex]['items']
-                                                      [itemIndex]['kg']
-                                                  ?.text ??
-                                              '0') ??
+                                  double kg =
+                                      double.tryParse(
+                                        partyList[partyIndex]['items'][itemIndex]['kg']
+                                                ?.text ??
+                                            '0',
+                                      ) ??
                                       0;
                                   double itemWeight = quantity * kg;
 
@@ -531,50 +565,54 @@ class _GudBillScreenState extends State<GudBillScreen> {
                                           Expanded(
                                             flex: 1,
                                             child: TextField(
-                                              controller: partyList[partyIndex]
-                                                  ['items'][itemIndex]['bags'],
+                                              controller:
+                                                  partyList[partyIndex]['items'][itemIndex]['bags'],
                                               keyboardType:
                                                   TextInputType.number,
                                               decoration: InputDecoration(
                                                 label: Text(
                                                   'Quantity',
                                                   style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize:
-                                                          screenWidth * 0.040),
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize:
+                                                        screenWidth * 0.040,
+                                                  ),
                                                 ),
                                                 border:
                                                     const OutlineInputBorder(),
                                                 hintText: "Katta",
                                               ),
                                               onChanged: (_) => calculateTotal(
-                                                  partyIndex, itemIndex),
+                                                partyIndex,
+                                                itemIndex,
+                                              ),
                                             ),
                                           ),
                                           const SizedBox(width: 10),
                                           Expanded(
                                             flex: 1,
                                             child: TextField(
-                                              controller: partyList[partyIndex]
-                                                  ['items'][itemIndex]['kg'],
+                                              controller:
+                                                  partyList[partyIndex]['items'][itemIndex]['kg'],
                                               keyboardType:
                                                   TextInputType.number,
                                               decoration: InputDecoration(
                                                 label: Text(
                                                   'Kilogram',
                                                   style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize:
-                                                          screenWidth * 0.040),
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize:
+                                                        screenWidth * 0.040,
+                                                  ),
                                                 ),
                                                 border:
                                                     const OutlineInputBorder(),
                                                 hintText: "Weight Per Bag",
                                               ),
                                               onChanged: (_) => calculateTotal(
-                                                  partyIndex, itemIndex),
+                                                partyIndex,
+                                                itemIndex,
+                                              ),
                                             ),
                                           ),
                                           const SizedBox(width: 10),
@@ -583,8 +621,9 @@ class _GudBillScreenState extends State<GudBillScreen> {
                                             child: Text(
                                               '$itemWeight KG',
                                               style: const TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold),
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -594,25 +633,27 @@ class _GudBillScreenState extends State<GudBillScreen> {
                                         children: [
                                           Expanded(
                                             child: TextField(
-                                              controller: partyList[partyIndex]
-                                                  ['items'][itemIndex]['rate'],
+                                              controller:
+                                                  partyList[partyIndex]['items'][itemIndex]['rate'],
                                               keyboardType:
                                                   TextInputType.number,
                                               decoration: InputDecoration(
                                                 label: Text(
                                                   'Rate',
                                                   style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize:
-                                                          screenWidth * 0.040),
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize:
+                                                        screenWidth * 0.040,
+                                                  ),
                                                 ),
                                                 border:
                                                     const OutlineInputBorder(),
                                                 hintText: "Rate as per 40 KG",
                                               ),
                                               onChanged: (_) => calculateTotal(
-                                                  partyIndex, itemIndex),
+                                                partyIndex,
+                                                itemIndex,
+                                              ),
                                             ),
                                           ),
                                           const SizedBox(width: 10),
@@ -620,32 +661,30 @@ class _GudBillScreenState extends State<GudBillScreen> {
                                             child: Text(
                                               'Rs. ${partyList[partyIndex]['items'][itemIndex]['total']!.text}',
                                               style: const TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold),
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
+                                      const SizedBox(height: 10),
                                       Row(
                                         children: [
                                           Expanded(
                                             flex: 2,
                                             child: TextField(
-                                              controller: partyList[partyIndex]
-                                                      ['items'][itemIndex]
-                                                  ['description'],
+                                              controller:
+                                                  partyList[partyIndex]['items'][itemIndex]['description'],
                                               keyboardType: TextInputType.text,
                                               decoration: InputDecoration(
                                                 label: Text(
                                                   'Tafseel',
                                                   style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize:
-                                                          screenWidth * 0.040),
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize:
+                                                        screenWidth * 0.040,
+                                                  ),
                                                 ),
                                                 border:
                                                     const OutlineInputBorder(),
@@ -655,10 +694,14 @@ class _GudBillScreenState extends State<GudBillScreen> {
                                           ),
                                           const SizedBox(width: 10),
                                           IconButton(
-                                            icon: const Icon(Icons.delete,
-                                                color: Colors.red),
+                                            icon: const Icon(
+                                              Icons.delete,
+                                              color: Colors.red,
+                                            ),
                                             onPressed: () => removeItem(
-                                                partyIndex, itemIndex),
+                                              partyIndex,
+                                              itemIndex,
+                                            ),
                                           ),
                                         ],
                                       ),

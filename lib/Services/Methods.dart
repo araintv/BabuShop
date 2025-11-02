@@ -1,5 +1,5 @@
-import 'package:baboo_and_co/Services/GsheetApi.dart';
 import 'package:flutter/material.dart';
+import 'package:shop/Services/GsheetApi.dart';
 
 class Methods {
   // Main Screen pr show hona wala Card Logo
@@ -10,7 +10,7 @@ class Methods {
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: SizedBox(
         height: 250,
-        width: width / 2.5, //desktop 2.5 - mobile 1
+        width: width / 1, //desktop 2.5 - mobile 1
         child: Card(
           semanticContainer: true,
           clipBehavior: Clip.antiAliasWithSaveLayer,
@@ -19,10 +19,7 @@ class Methods {
           ),
           elevation: 10,
           margin: const EdgeInsets.all(10),
-          child: Image.asset(
-            'assets/logo.jpeg',
-            fit: BoxFit.fill,
-          ),
+          child: Image.asset('assets/logo.jpeg', fit: BoxFit.fill),
         ),
       ),
     );
@@ -30,9 +27,7 @@ class Methods {
 
   // Navigate Method
   void navigateTo(BuildContext context, Widget screen) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => screen),
-    );
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => screen));
   } // End Here
 
   // Bank Names Where Accounts are Registered
@@ -57,11 +52,13 @@ class Methods {
     };
   }
 
-// Start Checking Account Balances
+  // Start Checking Account Balances
   Future<Map<String, double>> fetchBalances(Set<String> accountKeys) async {
     final data = await UserSheetsApi.fetchAllRows();
-    Map<String, double> newBalances =
-        Map.fromIterable(accountKeys, value: (_) => 0.0);
+    Map<String, double> newBalances = Map.fromIterable(
+      accountKeys,
+      value: (_) => 0.0,
+    );
 
     for (var row in data.skip(1)) {
       if (row.length < 6) continue;

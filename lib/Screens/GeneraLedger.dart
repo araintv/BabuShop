@@ -1,6 +1,8 @@
-import 'package:baboo_and_co/Services/GsheetApi.dart';
-import 'package:baboo_and_co/Widgets/Button.dart';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shop/Services/GsheetApi.dart';
 
 class DailyCashBook extends StatefulWidget {
   const DailyCashBook({super.key});
@@ -10,56 +12,108 @@ class DailyCashBook extends StatefulWidget {
 }
 
 class _CustomerKhataState extends State<DailyCashBook> {
-  List<Map<String, dynamic>> filteredData = []; // Holds row + index
+  List<Map<String, dynamic>> filteredData = [];
   List<List<String>> allData = [];
   bool isLoading = true;
+  bool isFiltering = false;
   TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    fetchData();
+    _loadCachedDataThenFetch();
   }
 
-  Future<void> fetchData() async {
-    setState(() => isLoading = true);
-    final allRows = await UserSheetsApi.fetchAllRows();
+  /// Load cached data instantly, then fetch fresh data in background
+  Future<void> _loadCachedDataThenFetch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getString('cached_sheet_data');
 
-    setState(() {
-      allData = allRows.isNotEmpty ? allRows.sublist(1) : [];
-      filterData(searchController.text);
-      isLoading = false;
+    if (cached != null) {
+      try {
+        final decoded = List<List<String>>.from(jsonDecode(cached));
+        setState(() {
+          allData = decoded;
+          filterData('');
+          isLoading = false;
+        });
+      } catch (_) {}
+    }
+
+    fetchData(refreshCache: true);
+  }
+
+  Future<void> fetchData({bool refreshCache = false}) async {
+    if (refreshCache) {
+      final allRows = await UserSheetsApi.fetchAllRows();
+
+      if (allRows.isNotEmpty) {
+        allData = allRows.sublist(1);
+
+        final prefs = await SharedPreferences.getInstance();
+        prefs.setString('cached_sheet_data', jsonEncode(allData));
+        filterData(searchController.text);
+      }
+
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  /// Run filtering in background isolate
+  Future<void> filterData(String query) async {
+    if (isFiltering) return;
+    setState(() => isFiltering = true);
+
+    final results = await compute(_filterTask, {
+      'data': allData,
+      'query': query,
     });
+
+    if (mounted) {
+      setState(() {
+        filteredData = results.reversed.toList();
+        isFiltering = false;
+      });
+    }
   }
 
-  void filterData(String query) {
-    setState(() {
-      filteredData = allData
+  /// Background filtering function
+  static List<Map<String, dynamic>> _filterTask(Map<String, dynamic> input) {
+    final allData = input['data'] as List<List<String>>;
+    final query = input['query'] as String;
+
+    if (query.isEmpty) {
+      return allData
           .asMap()
           .entries
-          .where((entry) {
-            List<String> row = entry.value;
-            return row.length >= 4 &&
-                (row[0].toLowerCase().contains(query.toLowerCase()) || // Date
-                    row[1]
-                        .toLowerCase()
-                        .contains(query.toLowerCase()) || // Jama
-                    row[3].toLowerCase().contains(query.toLowerCase()) ||
-                    row[5].toLowerCase().contains(query.toLowerCase())); // Naam
-          })
           .map((entry) => {"index": entry.key, "row": entry.value})
-          .toList()
-          .reversed
           .toList();
-    });
+    }
+
+    final lowerQuery = query.toLowerCase();
+    return allData
+        .asMap()
+        .entries
+        .where((entry) {
+          final row = entry.value;
+          if (row.length < 6) return false;
+          return row[0].toLowerCase().contains(lowerQuery) ||
+              row[1].toLowerCase().contains(lowerQuery) ||
+              row[3].toLowerCase().contains(lowerQuery) ||
+              row[5].toLowerCase().contains(lowerQuery);
+        })
+        .map((entry) => {"index": entry.key, "row": entry.value})
+        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('General Ledger \'CashBook\'',
-            style: TextStyle(fontSize: 30, fontWeight: FontWeight.w500)),
+        title: const Text(
+          'General Ledger \'CashBook\'',
+          style: TextStyle(fontWeight: FontWeight.w500),
+        ),
         centerTitle: true,
       ),
       body: isLoading
@@ -88,78 +142,247 @@ class _CustomerKhataState extends State<DailyCashBook> {
                           onChanged: (value) => filterData(value),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        flex: 1,
-                        child: SizedBox(
-                          height: 50,
-                          child: Button_Widget(
-                              context, 'Refresh', Colors.green, fetchData),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
                     ],
                   ),
                 ),
+                if (isFiltering)
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: LinearProgressIndicator(),
+                  ),
                 Expanded(
                   child: filteredData.isEmpty
                       ? const Center(child: Text('No matching entries found'))
-                      : ListView(
-                          children: [
-                            DataTable(
-                              columns: const [
-                                DataColumn(
-                                    label: Text('No.',
-                                        style: TextStyle(fontSize: 18))),
-                                DataColumn(
-                                    label: Text('Date',
-                                        style: TextStyle(fontSize: 18))),
-                                DataColumn(
-                                    label: Text('Jama',
-                                        style: TextStyle(fontSize: 18))),
-                                DataColumn(
-                                    label: Text('Type',
-                                        style: TextStyle(fontSize: 18))),
-                                DataColumn(
-                                    label: Text('Naam',
-                                        style: TextStyle(fontSize: 18))),
-                                // DataColumn(
-                                //     label: Text('Quantity',
-                                //         style: TextStyle(fontSize: 18))),
-                                DataColumn(
-                                    label: Text('Amount',
-                                        style: TextStyle(fontSize: 18))),
-                                DataColumn(
-                                    label: Text('Edit',
-                                        style: TextStyle(fontSize: 18))),
-                                DataColumn(
-                                    label: Text('Delete',
-                                        style: TextStyle(fontSize: 18))),
-                              ],
-                              rows: filteredData.map((entry) {
-                                int realIndex = entry["index"];
-                                List<String> row = entry["row"];
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            double tableWidth = constraints.maxWidth;
+                            double dateCol = tableWidth * 0.15;
+                            double jamaCol = tableWidth * 0.15;
+                            double typeCol = tableWidth * 0.15;
+                            double naamCol = tableWidth * 0.15;
+                            double amountCol = tableWidth * 0.15;
+                            double iconCol = tableWidth * 0.075;
 
-                                return DataRow(cells: [
-                                  DataCell(Text((realIndex + 1).toString())),
-                                  DataCell(Text(row[0].replaceAll("'", ""))),
-                                  DataCell(Text(row[1])),
-                                  DataCell(Text(row[2])),
-                                  DataCell(Text(row[3])),
-                                  // DataCell(Text(row[4])),
-                                  DataCell(Text(row[5])),
-                                  DataCell(InkWell(
-                                      onTap: () => editEntry(realIndex, row),
-                                      child: const Icon(Icons.edit,
-                                          color: Colors.blue))),
-                                  DataCell(InkWell(
-                                      onTap: () => deleteEntry(realIndex),
-                                      child: const Icon(Icons.delete,
-                                          color: Colors.red))),
-                                ]);
-                              }).toList(),
-                            ),
-                          ],
+                            return SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: SizedBox(
+                                width: tableWidth,
+                                child: Column(
+                                  children: [
+                                    // ✅ Header Row
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        children: [
+                                          SizedBox(
+                                            width: dateCol,
+                                            child: const Text(
+                                              'Date',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 3),
+                                          SizedBox(
+                                            width: jamaCol,
+                                            child: const Text(
+                                              'Jama',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 3),
+                                          SizedBox(
+                                            width: typeCol,
+                                            child: const Text(
+                                              'Type',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 3),
+                                          SizedBox(
+                                            width: naamCol,
+                                            child: const Text(
+                                              'Naam',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 3),
+                                          SizedBox(
+                                            width: amountCol,
+                                            child: const Text(
+                                              'Amount',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 3),
+                                          SizedBox(
+                                            width: iconCol,
+                                            child: const Text(
+                                              'Edit',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          SizedBox(width: 3),
+                                          SizedBox(
+                                            width: iconCol,
+                                            child: const Text(
+                                              'DLT',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    // ✅ Data Rows
+                                    Expanded(
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount: filteredData.length,
+                                        itemBuilder: (context, index) {
+                                          final entry = filteredData[index];
+                                          final realIndex = entry["index"];
+                                          final row =
+                                              entry["row"] as List<String>;
+
+                                          return Container(
+                                            margin: const EdgeInsets.symmetric(
+                                              horizontal: 4,
+                                              vertical: 2,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.grey
+                                                      .withOpacity(0.1),
+                                                  blurRadius: 2,
+                                                  offset: const Offset(0, 1),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                SizedBox(
+                                                  width: dateCol,
+                                                  child: Text(
+                                                    row[0].replaceAll("'", ""),
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 3),
+                                                SizedBox(
+                                                  width: jamaCol,
+                                                  child: Text(
+                                                    row[1],
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 3),
+                                                SizedBox(
+                                                  width: typeCol,
+                                                  child: Text(
+                                                    row[2],
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 3),
+                                                SizedBox(
+                                                  width: naamCol,
+                                                  child: Text(
+                                                    row[3],
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 3),
+                                                SizedBox(
+                                                  width: amountCol,
+                                                  child: Text(
+                                                    row[5],
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: iconCol,
+                                                  child: Center(
+                                                    child: InkWell(
+                                                      onTap: () => editEntry(
+                                                        realIndex,
+                                                        row,
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.edit,
+                                                        color: Colors.blue,
+                                                        size: 18,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 3),
+                                                SizedBox(
+                                                  width: iconCol,
+                                                  child: Center(
+                                                    child: InkWell(
+                                                      onTap: () => deleteEntry(
+                                                        realIndex,
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.delete,
+                                                        color: Colors.red,
+                                                        size: 18,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
                 ),
               ],
@@ -168,16 +391,20 @@ class _CustomerKhataState extends State<DailyCashBook> {
   }
 
   void editEntry(int index, List<String> row) {
-    TextEditingController dateController =
-        TextEditingController(text: row[0].replaceAll("'", ""));
+    TextEditingController dateController = TextEditingController(
+      text: row[0].replaceAll("'", ""),
+    );
     TextEditingController jamaController = TextEditingController(text: row[1]);
     TextEditingController naamController = TextEditingController(text: row[3]);
-    TextEditingController quantityController =
-        TextEditingController(text: row[4]);
-    TextEditingController amountController =
-        TextEditingController(text: row[5]);
-    TextEditingController tafseelController =
-        TextEditingController(text: row.length > 6 ? row[6] : '');
+    TextEditingController quantityController = TextEditingController(
+      text: row[4],
+    );
+    TextEditingController amountController = TextEditingController(
+      text: row[5],
+    );
+    TextEditingController tafseelController = TextEditingController(
+      text: row.length > 6 ? row[6] : '',
+    );
 
     bool isDateValid = true;
 
@@ -188,41 +415,48 @@ class _CustomerKhataState extends State<DailyCashBook> {
           builder: (context, setState) {
             return AlertDialog(
               title: const Text('Edit Entry'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: dateController,
-                    decoration: InputDecoration(
-                      labelText: 'Date (DD-MM-YYYY)',
-                      errorText: isDateValid ? null : 'Invalid date format',
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: dateController,
+                      decoration: InputDecoration(
+                        labelText: 'Date (DD-MM-YYYY)',
+                        errorText: isDateValid ? null : 'Invalid date format',
+                      ),
+                      keyboardType: TextInputType.datetime,
                     ),
-                    keyboardType: TextInputType.datetime,
-                  ),
-                  TextField(
+                    TextField(
                       controller: jamaController,
-                      decoration: const InputDecoration(labelText: 'Jama')),
-                  TextField(
+                      decoration: const InputDecoration(labelText: 'Jama'),
+                    ),
+                    TextField(
                       controller: naamController,
-                      decoration: const InputDecoration(labelText: 'Naam')),
-                  TextField(
+                      decoration: const InputDecoration(labelText: 'Naam'),
+                    ),
+                    TextField(
                       controller: quantityController,
                       decoration: const InputDecoration(labelText: 'Quantity'),
-                      keyboardType: TextInputType.number),
-                  TextField(
+                      keyboardType: TextInputType.number,
+                    ),
+                    TextField(
                       controller: amountController,
                       decoration: const InputDecoration(labelText: 'Amount'),
-                      keyboardType: TextInputType.number),
-                  TextField(
+                      keyboardType: TextInputType.number,
+                    ),
+                    TextField(
                       controller: tafseelController,
                       decoration: const InputDecoration(labelText: 'Tafseel'),
-                      keyboardType: TextInputType.text),
-                ],
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel')),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
                 TextButton(
                   onPressed: () async {
                     if (!isValidDateFormat(dateController.text)) {
@@ -237,11 +471,11 @@ class _CustomerKhataState extends State<DailyCashBook> {
                       naamController.text,
                       quantityController.text,
                       amountController.text,
-                      tafseelController.text
+                      tafseelController.text,
                     ];
 
                     await UserSheetsApi.updateRow(index + 2, updatedRow);
-                    fetchData();
+                    fetchData(refreshCache: true);
                     Navigator.pop(context);
                   },
                   child: const Text('Update'),
@@ -255,7 +489,7 @@ class _CustomerKhataState extends State<DailyCashBook> {
   }
 
   bool isValidDateFormat(String date) {
-    RegExp regex = RegExp(r'^\d{2}-\d{2}-\d{4}$');
+    final regex = RegExp(r'^\d{2}-\d{2}-\d{4}$');
     return regex.hasMatch(date);
   }
 
@@ -268,12 +502,13 @@ class _CustomerKhataState extends State<DailyCashBook> {
           content: const Text('Are you sure you want to delete this entry?'),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             TextButton(
               onPressed: () async {
                 await UserSheetsApi.deleteRow(index + 2);
-                fetchData();
+                fetchData(refreshCache: true);
                 Navigator.pop(context);
               },
               child: const Text('Delete'),

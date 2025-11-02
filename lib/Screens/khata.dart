@@ -1,10 +1,10 @@
-import 'package:baboo_and_co/Widgets/Button.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:baboo_and_co/Services/GsheetApi.dart';
 import 'package:intl/intl.dart';
 import 'package:quickalert/models/quickalert_type.dart';
 import 'package:quickalert/widgets/quickalert_dialog.dart';
+import 'package:shop/Services/GsheetApi.dart';
+import 'package:shop/Widgets/Button.dart';
 
 class KhataScreen extends StatefulWidget {
   const KhataScreen({super.key});
@@ -57,9 +57,11 @@ class _KhataScreenState extends State<KhataScreen> {
 
     setState(() {
       filteredData = mappedData
-          .where((entry) =>
-              entry["Naam"]?.toLowerCase() == khataName.toLowerCase() ||
-              entry["Jama"]?.toLowerCase() == khataName.toLowerCase())
+          .where(
+            (entry) =>
+                entry["Naam"]?.toLowerCase() == khataName.toLowerCase() ||
+                entry["Jama"]?.toLowerCase() == khataName.toLowerCase(),
+          )
           .toList();
 
       // Sort the filtered data by Date in descending order
@@ -73,11 +75,12 @@ class _KhataScreenState extends State<KhataScreen> {
     });
   }
 
-// Helper function to parse the date
+  // Helper function to parse the date
   DateTime _parseDate(String dateString) {
     try {
-      return DateFormat("dd-MM-yyyy")
-          .parse(dateString); // Adjust format if needed
+      return DateFormat(
+        "dd-MM-yyyy",
+      ).parse(dateString); // Adjust format if needed
     } catch (e) {
       return DateTime(2000, 1, 1); // Default fallback date
     }
@@ -124,15 +127,19 @@ class _KhataScreenState extends State<KhataScreen> {
       }
 
       runningBalances.insert(
-          0, runningBalance); // Insert at index 0 to maintain order
+        0,
+        runningBalance,
+      ); // Insert at index 0 to maintain order
     }
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title:
-            const Text("Khata Accounts", style: TextStyle(color: Colors.black)),
+        title: const Text(
+          "Khata Accounts",
+          style: TextStyle(color: Colors.black),
+        ),
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Column(
@@ -149,27 +156,30 @@ class _KhataScreenState extends State<KhataScreen> {
                       optionsBuilder: (TextEditingValue textEditingValue) {
                         if (textEditingValue.text.isEmpty)
                           return const Iterable<String>.empty();
-                        return accountNames.where((name) => name
-                            .toLowerCase()
-                            .contains(textEditingValue.text.toLowerCase()));
+                        return accountNames.where(
+                          (name) => name.toLowerCase().contains(
+                            textEditingValue.text.toLowerCase(),
+                          ),
+                        );
                       },
                       onSelected: (String selected) {
                         searchController.text = selected;
                       },
                       fieldViewBuilder:
                           (context, controller, focusNode, onEditingComplete) {
-                        searchController = controller;
-                        return TextField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          onEditingComplete: onEditingComplete,
-                          decoration: InputDecoration(
-                            hintText: "Search Khata",
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
-                      },
+                            searchController = controller;
+                            return TextField(
+                              controller: controller,
+                              focusNode: focusNode,
+                              onEditingComplete: onEditingComplete,
+                              decoration: InputDecoration(
+                                hintText: "Search Khata",
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            );
+                          },
                     ),
                   ),
                 ),
@@ -177,22 +187,26 @@ class _KhataScreenState extends State<KhataScreen> {
                 SizedBox(
                   width: screenWidth * 0.30,
                   height: screenHeight * 0.070,
-                  child:
-                      Button_Widget(context, 'Search', Colors.black, () async {
-                    bool hasInternet = await isInternetAvailable();
-                    if (hasInternet) {
-                      if (searchController.text.isNotEmpty) {
-                        fetchData(searchController.text.trim());
+                  child: Button_Widget(
+                    context,
+                    'Search',
+                    Colors.black,
+                    () async {
+                      bool hasInternet = await isInternetAvailable();
+                      if (hasInternet) {
+                        if (searchController.text.isNotEmpty) {
+                          fetchData(searchController.text.trim());
+                        }
+                      } else {
+                        QuickAlert.show(
+                          context: context,
+                          type: QuickAlertType.error,
+                          title: 'No Internet',
+                          text: 'You are Disconnected',
+                        );
                       }
-                    } else {
-                      QuickAlert.show(
-                        context: context,
-                        type: QuickAlertType.error,
-                        title: 'No Internet',
-                        text: 'You are Disconnected',
-                      );
-                    }
-                  }),
+                    },
+                  ),
                 ),
               ],
             ),
@@ -200,102 +214,117 @@ class _KhataScreenState extends State<KhataScreen> {
           isLoading
               ? const Center(child: CircularProgressIndicator())
               : filteredData.isNotEmpty
-                  ? Expanded(
-                      child: ListView.builder(
-                        itemCount: filteredData.length,
-                        itemBuilder: (context, index) {
-                          final entry = filteredData[index];
-                          double amount =
-                              double.tryParse(entry["Amount"] ?? "0") ?? 0.0;
-                          bool isDebit = entry["Naam"]?.toLowerCase() ==
-                              searchController.text.toLowerCase();
-                          bool isCredit = entry["Jama"]?.toLowerCase() ==
-                              searchController.text.toLowerCase();
+              ? Expanded(
+                  child: ListView.builder(
+                    itemCount: filteredData.length,
+                    itemBuilder: (context, index) {
+                      final entry = filteredData[index];
+                      double amount =
+                          double.tryParse(entry["Amount"] ?? "0") ?? 0.0;
+                      bool isDebit =
+                          entry["Naam"]?.toLowerCase() ==
+                          searchController.text.toLowerCase();
+                      bool isCredit =
+                          entry["Jama"]?.toLowerCase() ==
+                          searchController.text.toLowerCase();
 
-                          return Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 8, horizontal: 10),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 1,
-                                      child: Center(
-                                        child: Text(
-                                          formatDate(entry["Date"] ?? "---"),
-                                          style: TextStyle(
-                                              fontSize: screenWidth * 0.020),
-                                        ),
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 10,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 1,
+                                  child: Center(
+                                    child: Text(
+                                      formatDate(entry["Date"] ?? "---"),
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.020,
                                       ),
                                     ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        '${entry["Details"] ?? "---"} - ${searchController.text == entry["Naam"] ? entry["Jama"] : searchController.text == "${entry["Jama"]}" ? entry["Naam"] : ""}',
-                                        maxLines: 3,
-                                        style: TextStyle(
-                                            fontSize: screenWidth * 0.010),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Center(
-                                        child: Text(
-                                          isCredit
-                                              ? amount.toStringAsFixed(0)
-                                              : "---",
-                                          style: TextStyle(
-                                              fontSize: isCredit
-                                                  ? screenWidth * 0.025
-                                                  : screenWidth * 0.015,
-                                              color: Colors.green),
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Center(
-                                        child: Text(
-                                          isDebit
-                                              ? amount.toStringAsFixed(0)
-                                              : "---",
-                                          style: TextStyle(
-                                              fontSize: isDebit
-                                                  ? screenWidth * 0.025
-                                                  : screenWidth * 0.015,
-                                              color: Colors.red),
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Center(
-                                        child: Text(
-                                          runningBalances[index] >= 0
-                                              ? "+${runningBalances[index].toStringAsFixed(0)}"
-                                              : runningBalances[index]
-                                                  .toStringAsFixed(0),
-                                          style: TextStyle(
-                                              fontSize: screenWidth * 0.025,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.blue),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                              const Divider(),
-                            ],
-                          );
-                        },
-                      ),
-                    )
-                  : const Center(
-                      child: Text("No matching records found",
-                          style: TextStyle(fontSize: 18, color: Colors.red)),
-                    ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    '${entry["Details"] ?? "---"} - ${searchController.text == entry["Naam"]
+                                        ? entry["Jama"]
+                                        : searchController.text == "${entry["Jama"]}"
+                                        ? entry["Naam"]
+                                        : ""}',
+                                    maxLines: 3,
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.010,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Center(
+                                    child: Text(
+                                      isCredit
+                                          ? amount.toStringAsFixed(0)
+                                          : "---",
+                                      style: TextStyle(
+                                        fontSize: isCredit
+                                            ? screenWidth * 0.025
+                                            : screenWidth * 0.015,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Center(
+                                    child: Text(
+                                      isDebit
+                                          ? amount.toStringAsFixed(0)
+                                          : "---",
+                                      style: TextStyle(
+                                        fontSize: isDebit
+                                            ? screenWidth * 0.025
+                                            : screenWidth * 0.015,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Center(
+                                    child: Text(
+                                      runningBalances[index] >= 0
+                                          ? "+${runningBalances[index].toStringAsFixed(0)}"
+                                          : runningBalances[index]
+                                                .toStringAsFixed(0),
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.025,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.blue,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Divider(),
+                        ],
+                      );
+                    },
+                  ),
+                )
+              : const Center(
+                  child: Text(
+                    "No matching records found",
+                    style: TextStyle(fontSize: 18, color: Colors.red),
+                  ),
+                ),
         ],
       ),
     );
